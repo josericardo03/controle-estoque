@@ -14,10 +14,10 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-yellow-900 flex items-center justify-center px-4 overflow-hidden relative">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-600 flex items-center justify-center px-4 overflow-hidden relative">
       {/* Animated Background Elements */}
       <motion.div
-        className="fixed top-10 left-10 w-40 h-40 bg-yellow-500 opacity-10 rounded-full"
+        className="fixed top-10 left-10 w-40 h-40 bg-blue-500 opacity-10 rounded-full"
         initial={{ scale: 0, rotate: 0 }}
         animate={{
           scale: [0, 1.1, 1],
@@ -30,7 +30,7 @@ const Login: React.FC = () => {
         }}
       />
       <motion.div
-        className="fixed bottom-10 right-10 w-72 h-72 bg-yellow-500 opacity-5 rounded-full"
+        className="fixed bottom-10 right-10 w-72 h-72 bg-blue-500 opacity-5 rounded-full"
         initial={{ scale: 0, rotate: 0 }}
         animate={{
           scale: [0, 1.05, 1],
@@ -45,7 +45,7 @@ const Login: React.FC = () => {
 
       {/* Login Container */}
       <motion.div
-        className="w-full max-w-md bg-gray-900/80 backdrop-blur-lg rounded-2xl shadow-2xl border-2 border-yellow-500/50 relative z-10 max-h-screen overflow-hidden"
+        className="w-full max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl border-2 border-blue-500/50 relative z-10 max-h-screen overflow-hidden"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -53,14 +53,14 @@ const Login: React.FC = () => {
         <div className="p-8 space-y-6">
           <div className="text-center mb-8">
             <motion.h2
-              className="text-4xl font-bold text-yellow-400 tracking-wider"
+              className="text-4xl font-bold text-blue-600 tracking-wider"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
               Controle Estoque
             </motion.h2>
-            <p className="text-gray-400 mt-2">Faça login para continuar</p>
+            <p className="text-gray-600 mt-2">Faça login para continuar</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -71,7 +71,7 @@ const Login: React.FC = () => {
               transition={{ delay: 0.3 }}
             >
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser className="text-yellow-500 opacity-70" />
+                <FaUser className="text-blue-500 opacity-70" />
               </div>
               <input
                 id="email"
@@ -80,7 +80,7 @@ const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
-                className="w-full pl-10 px-4 py-3 bg-gray-800/60 text-yellow-400 border border-yellow-600/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                className="w-full pl-10 px-4 py-3 bg-blue-50 text-blue-900 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
               />
             </motion.div>
 
@@ -91,7 +91,7 @@ const Login: React.FC = () => {
               transition={{ delay: 0.4 }}
             >
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="text-yellow-500 opacity-70" />
+                <FaLock className="text-blue-500 opacity-70" />
               </div>
               <input
                 id="password"
@@ -100,7 +100,7 @@ const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Senha"
-                className="w-full pl-10 px-4 py-3 bg-gray-800/60 text-yellow-400 border border-yellow-600/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-300"
+                className="w-full pl-10 px-4 py-3 bg-blue-50 text-blue-900 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
               />
             </motion.div>
 
@@ -109,7 +109,7 @@ const Login: React.FC = () => {
                 type="submit"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="w-full py-3 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 group"
+                className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center space-x-2 group"
               >
                 <FaSignInAlt className={`transition-transform duration-300 ${isHovered ? "translate-x-1" : ""}`} />
                 <span>Entrar</span>
@@ -117,7 +117,7 @@ const Login: React.FC = () => {
             </motion.div>
 
             <motion.div className="mt-6 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-              <a href="#" className="text-yellow-400 hover:text-yellow-300 text-sm transition duration-300 hover:underline">
+              <a href="#" className="text-blue-600 hover:text-blue-800 text-sm transition duration-300 hover:underline">
                 Esqueceu sua senha?
               </a>
             </motion.div>

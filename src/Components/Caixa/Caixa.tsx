@@ -12,7 +12,9 @@ import {
   Legend, 
   PieChart, 
   Pie, 
-  Cell 
+  Cell, 
+  ResponsiveContainer,
+  ReferenceLine
 } from 'recharts';
 import { 
   FaMoneyBillWave, 
@@ -66,99 +68,109 @@ const Caixa: React.FC = () => {
   const [selectedSeller, setSelectedSeller] = useState(sellerPerformanceData[0]);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 text-gray-900">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Profit Chart */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 col-span-2">
-          <h2 className="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-            <FaChartLine className="mr-2" /> Evolução do Lucro
-          </h2>
-          <LineChart width={600} height={300} data={profitData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+    
+    <div className="w-full min-h-screen bg-blue-600 p-4 overflow-auto">
+    <div className="grid grid-cols-12 gap-4 h-full">
+      {/* Profit Chart */}
+      <div className="col-span-12 lg:col-span-8 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4">
+        <h2 className="text-xl font-semibold text-blue-600 mb-3 flex items-center gap-2">
+          <FaChartLine className="text-blue-500" /> Evolução do Lucro
+        </h2>
+        <ResponsiveContainer width="100%" height="87%">
+          <LineChart 
+            data={profitData}
+            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="month" stroke="#888" />
             <YAxis stroke="#888" />
             <Tooltip 
-              contentStyle={{ backgroundColor: '#f0f0f0', border: 'none' }} 
+              contentStyle={{ 
+                backgroundColor: '#f9fafb', 
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px'
+              }} 
               itemStyle={{ color: '#2196F3' }}
             />
-            <Line type="monotone" dataKey="lucro" stroke="#2196F3" strokeWidth={3} />
+            <ReferenceLine y={4500} label="" stroke="green" strokeDasharray="3 3" />
+            <Line 
+              type="monotone" 
+              dataKey="lucro" 
+              stroke="#000000" 
+              strokeWidth={3}
+              dot={{ r: 5 }}
+              activeDot={{ r: 8 }}
+            />
           </LineChart>
-        </div>
+        </ResponsiveContainer>
+      </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white shadow-lg rounded-2xl p-4 flex items-center">
-            <FaMoneyBillWave className="text-blue-500 text-3xl mr-4" />
-            <div>
-              <p className="text-gray-600">Custo Produtos</p>
-              <h3 className="text-xl font-bold text-blue-600">R$ 50.000</h3>
-            </div>
-          </div>
-          <div className="bg-white shadow-lg rounded-2xl p-4 flex items-center">
-            <FaShoppingCart className="text-blue-500 text-3xl mr-4" />
-            <div>
-              <p className="text-gray-600">Ticket Médio</p>
-              <h3 className="text-xl font-bold text-blue-600">R$ 300</h3>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Types Chart */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 col-span-1">
-          <h2 className="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-            <FaCreditCard className="mr-2" /> Tipos de Pagamento
-          </h2>
-          <PieChart width={400} height={300}>
+      {/* Payment Types Chart */}
+      <div className="col-span-12 lg:col-span-4 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4">
+        <h2 className="text-xl font-semibold text-blue-600 mb-3 flex items-center gap-2">
+          <FaCreditCard className="text-blue-500" /> Tipos de Pagamento
+        </h2>
+        <ResponsiveContainer width="100%" height="80%">
+          <PieChart 
+            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          >
             <Pie
               data={paymentTypeData}
-              cx={150}
-              cy={150}
+              cx="50%"
+              cy="50%"
               labelLine={false}
-              outerRadius={100}
+              outerRadius="80%"
               fill="#8884d8"
               dataKey="value"
+              paddingAngle={5}
             >
               {paymentTypeData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={COLORS[index % COLORS.length]} 
+                  stroke={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
             <Tooltip 
-              contentStyle={{ backgroundColor: '#f0f0f0', border: 'none' }} 
+              contentStyle={{ 
+                backgroundColor: '#f9fafb', 
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px'
+              }} 
               itemStyle={{ color: '#2196F3' }}
             />
             <Legend 
               iconType="circle" 
-              layout="vertical" 
-              verticalAlign="middle" 
-              align="right"
+              layout="horizontal"
+              verticalAlign="bottom"
+              align="center"
               wrapperStyle={{ 
-                color: '#666', 
-                position: 'absolute', 
-                right: '-80px', 
-                top: '50%', 
-                transform: 'translateY(-50%)' 
+                paddingTop: '10px',
+                fontSize: '12px'
               }}
             />
           </PieChart>
+        </ResponsiveContainer>
         </div>
 
         {/* Top Clients */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 col-span-1">
-          <h2 className="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-            <FaUsers className="mr-2" /> Top 5 Clientes
+        <div className="col-span-12 lg:col-span-4 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4">
+          <h2 className="text-xl font-semibold text-blue-600 mb-3 flex items-center gap-2">
+            <FaUsers className="text-blue-500" /> Top 5 Clientes
           </h2>
-          <table className="w-full">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-600 border-b border-gray-200">
-                <th className="text-left">Cliente</th>
-                <th className="text-right">Total</th>
+              <tr className="text-gray-500 border-b border-gray-200">
+                <th className="text-left py-1">Cliente</th>
+                <th className="text-right py-1">Total</th>
               </tr>
             </thead>
             <tbody>
               {topClientsData.map((client, index) => (
-                <tr key={index} className="border-b border-gray-200 hover:bg-blue-50">
+                <tr key={index} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
                   <td className="py-2">{client.nome}</td>
-                  <td className="text-right text-blue-600">R$ {client.total.toLocaleString()}</td>
+                  <td className="text-right  font-semibold">R$ {client.total.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -166,69 +178,61 @@ const Caixa: React.FC = () => {
         </div>
 
         {/* Seller Performance */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 col-span-2">
-          <h2 className="text-2xl font-bold text-blue-600 mb-4">Desempenho de Vendedores</h2>
-          <div className="grid grid-cols-3 gap-4">
+        <div className="col-span-12 lg:col-span-8 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4">
+          <h2 className="text-xl font-semibold text-blue-600 mb-3">Desempenho de Vendedores</h2>
+          <div className="grid grid-cols-3 gap-3">
             {sellerPerformanceData.map((seller, index) => (
               <div 
                 key={index} 
-                className={`p-4 rounded-lg cursor-pointer ${
+                className={`p-3 rounded-lg cursor-pointer transition-all duration-300 text-sm ${
                   selectedSeller.vendedor === seller.vendedor 
-                    ? 'bg-blue-100 border border-blue-300' 
-                    : 'hover:bg-gray-100'
+                    ? 'bg-blue-100 border border-blue-300 scale-105' 
+                    : 'hover:bg-gray-100 hover:scale-105'
                 }`}
                 onClick={() => setSelectedSeller(seller)}
               >
-                <h3 className="text-lg font-bold text-blue-600">{seller.vendedor}</h3>
+                <h3 className="text-base font-bold ">{seller.vendedor}</h3>
                 <p className="text-gray-600">Total Produtos: {seller.totalProdutos}</p>
                 <p className="text-gray-600">Faturado: R$ {seller.totalFaturado.toLocaleString()}</p>
               </div>
             ))}
           </div>
-          <div className="mt-4 bg-gray-100 p-4 rounded-lg">
-            <h4 className="text-xl font-bold text-blue-600 mb-2">
+          <div className="mt-3 bg-gray-50 p-3 rounded-lg">
+            <h4 className="text-lg font-bold text-blue-600 mb-2">
               Detalhes de {selectedSeller.vendedor}
             </h4>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-gray-600">Total Produtos</p>
-                <h3 className="text-xl font-bold text-blue-600">
-                  {selectedSeller.totalProdutos}
-                </h3>
-              </div>
-              <div>
-                <p className="text-gray-600">Total Faturado</p>
-                <h3 className="text-xl font-bold text-blue-600">
-                  R$ {selectedSeller.totalFaturado.toLocaleString()}
-                </h3>
-              </div>
-              <div>
-                <p className="text-gray-600">Ticket Médio</p>
-                <h3 className="text-xl font-bold text-blue-600">
-                  R$ {selectedSeller.ticketMedio.toLocaleString()}
-                </h3>
-              </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Total Produtos', value: selectedSeller.totalProdutos },
+                { label: 'Total Faturado', value: `R$ ${selectedSeller.totalFaturado.toLocaleString()}` },
+                { label: 'Ticket Médio', value: `R$ ${selectedSeller.ticketMedio.toLocaleString()}` }
+              ].map((item, index) => (
+                <div key={index} className="bg-white p-2 rounded-lg shadow-sm">
+                  <p className="text-gray-500 text-xs">{item.label}</p>
+                  <h3 className="text-base font-bold ">{item.value}</h3>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Top Products */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 col-span-3">
-          <h2 className="text-2xl font-bold text-blue-600 mb-4">Produtos Mais Vendidos</h2>
-          <table className="w-full">
+        <div className="col-span-12 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4 ">
+          <h2 className="text-xl font-semibold text-blue-600 mb-3">Produtos Mais Vendidos</h2>
+          <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-600 border-b border-gray-200">
-                <th className="text-left">Produto</th>
-                <th className="text-right">Quantidade</th>
-                <th className="text-right">Faturamento</th>
+              <tr className="text-gray-500 border-b border-gray-200">
+                <th className="text-left py-1">Produto</th>
+                <th className="text-right py-1">Quantidade</th>
+                <th className="text-right py-1">Faturamento</th>
               </tr>
             </thead>
             <tbody>
               {topProductsData.map((product, index) => (
-                <tr key={index} className="border-b border-gray-200 hover:bg-blue-50">
+                <tr key={index} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
                   <td className="py-2">{product.produto}</td>
                   <td className="text-right">{product.quantidade}</td>
-                  <td className="text-right text-blue-600">R$ {product.faturamento.toLocaleString()}</td>
+                  <td className="text-right text-green-600 font-semibold">R$ {product.faturamento.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>

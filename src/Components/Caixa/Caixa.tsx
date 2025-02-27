@@ -1,243 +1,155 @@
-"use client";
-import React, { useState } from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer,
-  ReferenceLine
-} from 'recharts';
-import { 
-  FaMoneyBillWave, 
-  FaShoppingCart, 
-  FaChartLine, 
-  FaUsers, 
-  FaCreditCard 
-} from 'react-icons/fa';
+"use client"
+import React, { useState, useMemo } from "react";
+import { FaSort, FaFilter, FaFileExport } from "react-icons/fa";
 
-// Dados Mock (substituir por dados reais)
-const profitData = [
-  { month: 'Jan', lucro: 4000 },
-  { month: 'Fev', lucro: 3000 },
-  { month: 'Mar', lucro: 5000 },
-  { month: 'Abr', lucro: 4500 },
-  { month: 'Mai', lucro: 6000 },
-];
-
-const paymentTypeData = [
-  { name: 'Crédito', value: 4000 },
-  { name: 'Débito', value: 3000 },
-  { name: 'Dinheiro', value: 2000 },
-  { name: 'Transferência', value: 1500 },
-];
-
-const topClientsData = [
-  { nome: 'João Silva', total: 15000 },
-  { nome: 'Maria Souza', total: 12500 },
-  { nome: 'Pedro Santos', total: 10000 },
-  { nome: 'Ana Oliveira', total: 8500 },
-  { nome: 'Carlos Pereira', total: 7000 },
-];
-
-const topProductsData = [
-  { produto: 'Notebook', quantidade: 50, faturamento: 75000 },
-  { produto: 'Smartphone', quantidade: 45, faturamento: 67500 },
-  { produto: 'Tablet', quantidade: 30, faturamento: 45000 },
-  { produto: 'Smartwatch', quantidade: 25, faturamento: 37500 },
-  { produto: 'Fone de Ouvido', quantidade: 20, faturamento: 30000 },
-];
-
-const sellerPerformanceData = [
-  { vendedor: 'Carlos', totalProdutos: 150, totalFaturado: 45000, ticketMedio: 300 },
-  { vendedor: 'Maria', totalProdutos: 120, totalFaturado: 36000, ticketMedio: 300 },
-  { vendedor: 'João', totalProdutos: 100, totalFaturado: 30000, ticketMedio: 300 },
-];
-
-const COLORS = ['#2196F3', '#4CAF50', '#FF5722', '#9C27B0', '#FF9800'];
+interface Venda {
+  id: string;
+  dataHora: string;
+  subtotal: number;
+  total: number;
+  desconto: number;
+  descricao: string;
+  estado: 'Concluída' | 'Pendente' | 'Cancelada';
+  numeroParcela: number;
+}
 
 const Caixa: React.FC = () => {
-  const [selectedSeller, setSelectedSeller] = useState(sellerPerformanceData[0]);
+  const [dataAbertura] = useState(new Date().toISOString().substring(0, 10));
+  const [dataFechamento, setDataFechamento] = useState("");
+  const [vendas, setVendas] = useState<Venda[]>([
+    // Example data - replace with actual data fetching logic
+    {
+      id: '1',
+      dataHora: new Date().toISOString(),
+      subtotal: 100.00,
+      total: 95.00,
+      desconto: 5.00,
+      descricao: 'Venda de produtos eletrônicos',
+      estado: 'Concluída',
+      numeroParcela: 1
+    }
+  ]);
+
+  const [sortConfig, setSortConfig] = useState<{key: keyof Venda, direction: 'ascending' | 'descending'}>({
+    key: 'dataHora',
+    direction: 'descending'
+  });
+
+  const sortedVendas = useMemo(() => {
+    let sortableVendas = [...vendas];
+    sortableVendas.sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+        return sortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+        return sortConfig.direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+    return sortableVendas;
+  }, [vendas, sortConfig]);
+
+  const calculateTotals = () => {
+    return {
+      totalVendas: vendas.reduce((sum, venda) => sum + venda.total, 0),
+      totalDescontos: vendas.reduce((sum, venda) => sum + venda.desconto, 0),
+      quantidadeVendas: vendas.length
+    };
+  };
+
+  const handleSort = (key: keyof Venda) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'ascending' ? 'descending' : 'ascending'
+    }));
+  };
+
+  const exportData = () => {
+    // Implement CSV or Excel export logic
+    const csvContent = vendas.map(v => Object.values(v).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "vendas_exportadas.csv");
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const totals = calculateTotals();
 
   return (
-    
-    <div className="w-full min-h-screen bg-blue-600 p-4 overflow-auto">
-    <div className="grid grid-cols-12 gap-4 h-full">
-      {/* Profit Chart */}
-      <div className="col-span-12 lg:col-span-8 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4">
-        <h2 className="text-xl font-semibold text-blue-600 mb-3 flex items-center gap-2">
-          <FaChartLine className="text-blue-500" /> Evolução do Lucro
-        </h2>
-        <ResponsiveContainer width="100%" height="87%">
-          <LineChart 
-            data={profitData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+    <div className="p-6 bg-white rounded-2xl shadow-lg space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-blue-700">Relatório de Caixa</h2>
+        <div className="flex space-x-2">
+          <button 
+            onClick={exportData}
+            className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="month" stroke="#888" />
-            <YAxis stroke="#888" />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#f9fafb', 
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px'
-              }} 
-              itemStyle={{ color: '#2196F3' }}
-            />
-            <ReferenceLine y={4500} label="" stroke="green" strokeDasharray="3 3" />
-            <Line 
-              type="monotone" 
-              dataKey="lucro" 
-              stroke="#000000" 
-              strokeWidth={3}
-              dot={{ r: 5 }}
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+            <FaFileExport /> Exportar
+          </button>
+        </div>
       </div>
 
-      {/* Payment Types Chart */}
-      <div className="col-span-12 lg:col-span-4 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4">
-        <h2 className="text-xl font-semibold text-blue-600 mb-3 flex items-center gap-2">
-          <FaCreditCard className="text-blue-500" /> Tipos de Pagamento
-        </h2>
-        <ResponsiveContainer width="100%" height="80%">
-          <PieChart 
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          >
-            <Pie
-              data={paymentTypeData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              outerRadius="80%"
-              fill="#8884d8"
-              dataKey="value"
-              paddingAngle={5}
-            >
-              {paymentTypeData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={COLORS[index % COLORS.length]} 
-                  stroke={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#f9fafb', 
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px'
-              }} 
-              itemStyle={{ color: '#2196F3' }}
-            />
-            <Legend 
-              iconType="circle" 
-              layout="horizontal"
-              verticalAlign="bottom"
-              align="center"
-              wrapperStyle={{ 
-                paddingTop: '10px',
-                fontSize: '12px'
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+      <div className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+        <div className="text-center">
+          <p className="text-sm text-gray-600">Total de Vendas</p>
+          <p className="text-xl font-bold text-blue-700">R$ {totals.totalVendas.toFixed(2)}</p>
         </div>
+        <div className="text-center">
+          <p className="text-sm text-gray-600">Total de Descontos</p>
+          <p className="text-xl font-bold text-red-600">R$ {totals.totalDescontos.toFixed(2)}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-sm text-gray-600">Quantidade de Vendas</p>
+          <p className="text-xl font-bold text-green-700">{totals.quantidadeVendas}</p>
+        </div>
+      </div>
 
-        {/* Top Clients */}
-        <div className="col-span-12 lg:col-span-4 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4">
-          <h2 className="text-xl font-semibold text-blue-600 mb-3 flex items-center gap-2">
-            <FaUsers className="text-blue-500" /> Top 5 Clientes
-          </h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-500 border-b border-gray-200">
-                <th className="text-left py-1">Cliente</th>
-                <th className="text-right py-1">Total</th>
+      <div className="overflow-x-auto">
+        <table className="w-full bg-white shadow-md rounded-lg overflow-hidden">
+          <thead className="bg-blue-50">
+            <tr>
+              {(['dataHora', 'subtotal', 'total', 'desconto', 'descricao', 'estado', 'numeroParcela'] as (keyof Venda)[]).map((key) => (
+                <th 
+                  key={key} 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-blue-100"
+                  onClick={() => handleSort(key)}
+                >
+                  <div className="flex items-center">
+                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    <FaSort className="ml-2 text-gray-400" />
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {sortedVendas.map((venda) => (
+              <tr key={venda.id} className="hover:bg-gray-50 transition">
+                <td className="px-4 py-3">{new Date(venda.dataHora).toLocaleString()}</td>
+                <td className="px-4 py-3">R$ {venda.subtotal.toFixed(2)}</td>
+                <td className="px-4 py-3">R$ {venda.total.toFixed(2)}</td>
+                <td className="px-4 py-3">R$ {venda.desconto.toFixed(2)}</td>
+                <td className="px-4 py-3">{venda.descricao}</td>
+                <td className="px-4 py-3">
+                  <span className={`
+                    px-2 py-1 rounded-full text-xs font-semibold
+                    ${venda.estado === 'Concluída' ? 'bg-green-100 text-green-800' : 
+                      venda.estado === 'Pendente' ? 'bg-yellow-100 text-yellow-800' : 
+                      'bg-red-100 text-red-800'}
+                  `}>
+                    {venda.estado}
+                  </span>
+                </td>
+                <td className="px-4 py-3">{venda.numeroParcela}</td>
               </tr>
-            </thead>
-            <tbody>
-              {topClientsData.map((client, index) => (
-                <tr key={index} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
-                  <td className="py-2">{client.nome}</td>
-                  <td className="text-right  font-semibold">R$ {client.total.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Seller Performance */}
-        <div className="col-span-12 lg:col-span-8 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4">
-          <h2 className="text-xl font-semibold text-blue-600 mb-3">Desempenho de Vendedores</h2>
-          <div className="grid grid-cols-3 gap-3">
-            {sellerPerformanceData.map((seller, index) => (
-              <div 
-                key={index} 
-                className={`p-3 rounded-lg cursor-pointer transition-all duration-300 text-sm ${
-                  selectedSeller.vendedor === seller.vendedor 
-                    ? 'bg-blue-100 border border-blue-300 scale-105' 
-                    : 'hover:bg-gray-100 hover:scale-105'
-                }`}
-                onClick={() => setSelectedSeller(seller)}
-              >
-                <h3 className="text-base font-bold ">{seller.vendedor}</h3>
-                <p className="text-gray-600">Total Produtos: {seller.totalProdutos}</p>
-                <p className="text-gray-600">Faturado: R$ {seller.totalFaturado.toLocaleString()}</p>
-              </div>
             ))}
-          </div>
-          <div className="mt-3 bg-gray-50 p-3 rounded-lg">
-            <h4 className="text-lg font-bold text-blue-600 mb-2">
-              Detalhes de {selectedSeller.vendedor}
-            </h4>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'Total Produtos', value: selectedSeller.totalProdutos },
-                { label: 'Total Faturado', value: `R$ ${selectedSeller.totalFaturado.toLocaleString()}` },
-                { label: 'Ticket Médio', value: `R$ ${selectedSeller.ticketMedio.toLocaleString()}` }
-              ].map((item, index) => (
-                <div key={index} className="bg-white p-2 rounded-lg shadow-sm">
-                  <p className="text-gray-500 text-xs">{item.label}</p>
-                  <h3 className="text-base font-bold ">{item.value}</h3>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Top Products */}
-        <div className="col-span-12 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl p-4 ">
-          <h2 className="text-xl font-semibold text-blue-600 mb-3">Produtos Mais Vendidos</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-500 border-b border-gray-200">
-                <th className="text-left py-1">Produto</th>
-                <th className="text-right py-1">Quantidade</th>
-                <th className="text-right py-1">Faturamento</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topProductsData.map((product, index) => (
-                <tr key={index} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
-                  <td className="py-2">{product.produto}</td>
-                  <td className="text-right">{product.quantidade}</td>
-                  <td className="text-right text-green-600 font-semibold">R$ {product.faturamento.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          </tbody>
+        </table>
       </div>
     </div>
   );

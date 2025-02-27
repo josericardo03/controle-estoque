@@ -17,7 +17,7 @@ import {
 import Clientes from "@/Components/Clientes/Clientes";
 import ContasPagar from "@/Components/Pagar/ContasPagar";
 import Produtos from "@/Components/Produtos/Produtos";
-import Caixa from "@/Components/Caixa/Caixa";
+import Caixa from "@/Components/Dashboard/Dashboard";
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);

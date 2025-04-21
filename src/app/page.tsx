@@ -11,5 +11,5 @@ import Item from "@/Components/Item/Item";
 import TabelaItem from "@/Components/Item/TabelaItem/TabelaItem";
 
 export default function Home() {
-  return <Clientes />;
+  return <Produtos />;
 }

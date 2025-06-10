@@ -34,7 +34,7 @@ interface FormData {
   salario: string;
 }
 
-export default function Home() {
+export default function NovoFuncionarioPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const methods = useForm<FormData>();
   const {
@@ -77,12 +77,17 @@ export default function Home() {
             {
               label: "Funcionários",
               href: "/funcionarios",
+            },
+            {
+              label: "Novo Funcionário",
+              href: "/funcionarios/novo",
               active: true,
             },
           ]}
         />
       </div>
 
+      {/* Formulário */}
       <FormProvider {...methods}>
         <FormLayout
           title="Cadastro de Funcionário"

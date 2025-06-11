@@ -22,6 +22,7 @@ interface SelectInputProps {
   isSearchable?: boolean;
   isClearable?: boolean;
   error?: string;
+  control?: any;
 }
 
 const customStyles: StylesConfig<SelectOption, boolean> = {
@@ -95,8 +96,32 @@ export function SelectInput({
   isSearchable = true,
   isClearable = true,
   error,
+  control: controlProp,
 }: SelectInputProps) {
-  const { control } = useFormContext();
+  const formContext = useFormContext();
+  const control = controlProp || formContext?.control;
+
+  if (!control) {
+    const Select = DefaultSelect as any;
+    return (
+      <div className="space-y-1">
+        {label && (
+          <label className="text-sm font-medium text-blue-500">{label}</label>
+        )}
+        <Select
+          options={options}
+          isMulti={isMulti}
+          isSearchable={isSearchable}
+          isClearable={isClearable}
+          placeholder={placeholder}
+          className={cn("text-sm", className)}
+          styles={customStyles}
+          instanceId={name}
+        />
+        {error && <p className="text-xs text-red-500">{error}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-1">

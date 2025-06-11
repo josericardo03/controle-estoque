@@ -55,6 +55,22 @@ const produtosExemplo: Produto[] = [
   },
 ];
 
+// Opções de cores com códigos hexadecimais
+const opcoesCorProduto = [
+  { value: "preto", label: "Preto", hex: "#000000" },
+  { value: "branco", label: "Branco", hex: "#FFFFFF" },
+  { value: "cinza", label: "Cinza", hex: "#808080" },
+  { value: "vermelho", label: "Vermelho", hex: "#FF0000" },
+  { value: "azul", label: "Azul", hex: "#0000FF" },
+  { value: "verde", label: "Verde", hex: "#008000" },
+  { value: "amarelo", label: "Amarelo", hex: "#FFFF00" },
+  { value: "roxo", label: "Roxo", hex: "#800080" },
+  { value: "rosa", label: "Rosa", hex: "#FFC0CB" },
+  { value: "laranja", label: "Laranja", hex: "#FFA500" },
+  { value: "marrom", label: "Marrom", hex: "#8B4513" },
+  { value: "bege", label: "Bege", hex: "#F5F5DC" },
+];
+
 export default function ProdutosPage() {
   const [showForm, setShowForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -62,6 +78,9 @@ export default function ProdutosPage() {
   const [produtoParaEditar, setProdutoParaEditar] = useState<Produto | null>(
     null
   );
+  const [especificacoes, setEspecificacoes] = useState<
+    { chave: string; valor: string }[]
+  >([]);
   const methodsNovo = useForm();
   const methodsEditar = useForm();
 
@@ -116,6 +135,24 @@ export default function ProdutosPage() {
   const handleSubmitEditar = (data: any) => {
     console.log("Editar produto:", data);
     setShowEditForm(false);
+  };
+
+  const adicionarEspecificacao = () => {
+    setEspecificacoes([...especificacoes, { chave: "", valor: "" }]);
+  };
+
+  const removerEspecificacao = (index: number) => {
+    setEspecificacoes(especificacoes.filter((_, i) => i !== index));
+  };
+
+  const atualizarEspecificacao = (
+    index: number,
+    campo: "chave" | "valor",
+    valor: string
+  ) => {
+    const novasEspecificacoes = [...especificacoes];
+    novasEspecificacoes[index][campo] = valor;
+    setEspecificacoes(novasEspecificacoes);
   };
 
   return (
@@ -398,88 +435,348 @@ export default function ProdutosPage() {
             submitText="Salvar"
             cancelText="Cancelar"
             onCancel={() => setShowEditForm(false)}
+            className="max-w-4xl mx-auto"
           >
-            <FormSection>
-              <FormField label="Nome">
-                <input
-                  type="text"
-                  {...methodsEditar.register("nome")}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  placeholder="Nome do produto"
-                />
-              </FormField>
+            <div className="space-y-6">
+              {/* Seção de Informações Básicas */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-white">
+                    Informações Básicas
+                  </h3>
+                </div>
 
-              <FormField label="Código">
-                <input
-                  type="text"
-                  {...methodsEditar.register("codigo")}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  placeholder="Código do produto"
-                />
-              </FormField>
+                <div className="p-6 space-y-8">
+                  {/* Grupo: Identificação */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 text-gray-800">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="M7 8h10" />
+                        <path d="M7 12h10" />
+                        <path d="M7 16h10" />
+                      </svg>
+                      <h4 className="text-base font-medium">
+                        Identificação do Produto
+                      </h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField label="Nome do Produto" className="space-y-2">
+                        <input
+                          type="text"
+                          {...methodsEditar.register("nome")}
+                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                          placeholder="Digite o nome do produto"
+                        />
+                      </FormField>
 
-              <FormField label="Descrição" fullWidth>
-                <textarea
-                  {...methodsEditar.register("descricao")}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  rows={3}
-                  placeholder="Descrição do produto"
-                />
-              </FormField>
+                      <FormField
+                        label="Código do Produto"
+                        className="space-y-2"
+                      >
+                        <input
+                          type="text"
+                          {...methodsEditar.register("codigo")}
+                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                          placeholder="Digite o código do produto"
+                        />
+                      </FormField>
+                    </div>
 
-              <FormField label="Preço">
-                <input
-                  type="number"
-                  step="0.01"
-                  {...methodsEditar.register("preco")}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  placeholder="0,00"
-                />
-              </FormField>
+                    <FormField
+                      label="Descrição do Produto"
+                      className="space-y-2"
+                    >
+                      <textarea
+                        {...methodsEditar.register("descricao")}
+                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                        rows={3}
+                        placeholder="Digite uma descrição detalhada do produto"
+                      />
+                    </FormField>
+                  </div>
 
-              <FormField label="Quantidade">
-                <input
-                  type="number"
-                  {...methodsEditar.register("quantidade")}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  placeholder="0"
-                />
-              </FormField>
+                  {/* Grupo: Estoque e Preço */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 text-gray-800">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="20" cy="21" r="1" />
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                      </svg>
+                      <h4 className="text-base font-medium">Estoque e Preço</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField label="Preço Unitário" className="space-y-2">
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">R$</span>
+                          </div>
+                          <input
+                            type="number"
+                            step="0.01"
+                            {...methodsEditar.register("preco")}
+                            className="w-full rounded-lg border-gray-300 pl-8 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                            placeholder="0,00"
+                          />
+                        </div>
+                      </FormField>
 
-              <FormField label="Categorias">
-                <SelectInput
-                  name="categorias"
-                  options={categorias}
-                  placeholder="Selecione as categorias"
-                  isMulti={true}
-                />
-              </FormField>
+                      <FormField
+                        label="Quantidade em Estoque"
+                        className="space-y-2"
+                      >
+                        <input
+                          type="number"
+                          {...methodsEditar.register("quantidade")}
+                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                          placeholder="0"
+                        />
+                      </FormField>
+                    </div>
+                  </div>
 
-              <FormField label="Cores">
-                <SelectInput
-                  name="cores"
-                  options={cores}
-                  placeholder="Selecione as cores"
-                  isMulti={true}
-                />
-              </FormField>
+                  {/* Grupo: Características */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 text-gray-800">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                      </svg>
+                      <h4 className="text-base font-medium">
+                        Características do Produto
+                      </h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        label="Categorias"
+                        className="space-y-2 md:col-span-2"
+                      >
+                        <SelectInput
+                          name="categorias"
+                          options={categorias}
+                          placeholder="Selecione as categorias"
+                          isMulti={true}
+                          className="rounded-lg"
+                        />
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {methodsEditar
+                            .watch("categorias")
+                            ?.map((categoria: string) => {
+                              const categoriaInfo = categorias.find(
+                                (c) => c.value === categoria
+                              );
+                              return categoriaInfo ? (
+                                <div
+                                  key={categoria}
+                                  className="flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-700"
+                                >
+                                  <span>{categoriaInfo.label}</span>
+                                </div>
+                              ) : null;
+                            })}
+                        </div>
+                      </FormField>
 
-              <FormField label="Unidade">
-                <SelectInput
-                  name="unidade"
-                  options={unidades}
-                  placeholder="Selecione a unidade"
-                />
-              </FormField>
+                      <FormField
+                        label="Unidade de Medida"
+                        className="space-y-2"
+                      >
+                        <SelectInput
+                          name="unidade"
+                          options={unidades}
+                          placeholder="Selecione a unidade"
+                          className="rounded-lg"
+                        />
+                      </FormField>
 
-              <FormField label="Tamanho">
-                <SelectInput
-                  name="tamanho"
-                  options={tamanhos}
-                  placeholder="Selecione o tamanho"
-                />
-              </FormField>
-            </FormSection>
+                      <FormField label="Tamanho/Dimensão" className="space-y-2">
+                        <SelectInput
+                          name="tamanho"
+                          options={tamanhos}
+                          placeholder="Selecione o tamanho"
+                          className="rounded-lg"
+                        />
+                      </FormField>
+
+                      <FormField
+                        label="Cores Disponíveis"
+                        className="space-y-2 md:col-span-2"
+                      >
+                        <SelectInput
+                          name="cores"
+                          options={opcoesCorProduto}
+                          placeholder="Selecione as cores"
+                          isMulti={true}
+                          className="rounded-lg"
+                        />
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {methodsEditar.watch("cores")?.map((cor: string) => {
+                            const corInfo = opcoesCorProduto.find(
+                              (c) => c.value === cor
+                            );
+                            return corInfo ? (
+                              <div
+                                key={cor}
+                                className="flex items-center gap-2 px-3 py-1 rounded-full text-sm"
+                                style={{
+                                  backgroundColor: corInfo.hex,
+                                  color: ["branco", "amarelo", "bege"].includes(
+                                    cor
+                                  )
+                                    ? "#000"
+                                    : "#fff",
+                                  border: [
+                                    "branco",
+                                    "amarelo",
+                                    "bege",
+                                  ].includes(cor)
+                                    ? "1px solid #e5e7eb"
+                                    : "none",
+                                }}
+                              >
+                                <span>{corInfo.label}</span>
+                              </div>
+                            ) : null;
+                          })}
+                        </div>
+                      </FormField>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção de Especificações Técnicas */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-white">
+                    Especificações Técnicas
+                  </h3>
+                  <p className="mt-1 text-sm text-blue-50">
+                    Adicione especificações técnicas detalhadas do produto
+                  </p>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  {especificacoes.map((esp, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col md:flex-row gap-4 p-4 rounded-lg bg-gray-50 border border-gray-200 hover:border-blue-200 transition-colors duration-200"
+                    >
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nome da Especificação
+                        </label>
+                        <input
+                          type="text"
+                          value={esp.chave}
+                          onChange={(e) =>
+                            atualizarEspecificacao(
+                              index,
+                              "chave",
+                              e.target.value
+                            )
+                          }
+                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                          placeholder="Ex: Material, Dimensões, etc"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Valor da Especificação
+                        </label>
+                        <input
+                          type="text"
+                          value={esp.valor}
+                          onChange={(e) =>
+                            atualizarEspecificacao(
+                              index,
+                              "valor",
+                              e.target.value
+                            )
+                          }
+                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                          placeholder="Ex: Algodão, 30x40cm, etc"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          onClick={() => removerEspecificacao(index)}
+                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          title="Remover Especificação"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={adicionarEspecificacao}
+                    className="w-full py-3 border-2 border-dashed border-blue-200 rounded-lg text-blue-600 hover:text-blue-700 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 flex items-center justify-center gap-2 group"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="transform group-hover:scale-110 transition-transform duration-200"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Adicionar Nova Especificação
+                  </button>
+                </div>
+              </div>
+            </div>
           </FormLayout>
         </FormProvider>
       </Modal>

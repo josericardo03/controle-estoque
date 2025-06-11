@@ -56,6 +56,15 @@ const customStyles: StylesConfig<SelectOption, boolean> = {
     backgroundColor: "#ffffff",
     borderRadius: "0.375rem",
     border: "1px solid #3b82f620",
+    zIndex: 9999,
+    position: "absolute",
+    width: "100%",
+    boxShadow:
+      "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+  }),
+  menuPortal: (base: any) => ({
+    ...base,
+    zIndex: 9999,
   }),
   multiValue: (base: any, { data }: any) => ({
     ...base,
@@ -123,6 +132,7 @@ export function SelectInput({
           instanceId={name}
           value={value}
           onChange={onChange}
+          menuPortalTarget={document.body}
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
@@ -151,6 +161,7 @@ export function SelectInput({
               className={cn("text-sm", className)}
               styles={customStyles}
               instanceId={name}
+              menuPortalTarget={document.body}
               value={
                 isMulti
                   ? options.filter((option) =>

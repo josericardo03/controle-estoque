@@ -33,6 +33,12 @@ export default function RootLayout({
                       Produtos
                     </Link>
                     <Link
+                      href="/pessoas"
+                      className="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Pessoas
+                    </Link>
+                    <Link
                       href="/configuracoes"
                       className="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
                     >

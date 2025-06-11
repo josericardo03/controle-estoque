@@ -17,6 +17,10 @@ interface ConfigItem {
   quantidadeProdutos: number;
 }
 
+type Row = {
+  getValue: (key: keyof ConfigItem) => any;
+};
+
 // Dados mockados
 const categoriasMock: ConfigItem[] = [
   {
@@ -61,18 +65,34 @@ export default function ConfiguracoesPage() {
     const baseColumns = [
       {
         accessorKey: "nome",
-        header: "Nome",
+        header: () => <div className="text-left">Nome</div>,
+        cell: ({ row }: { row: Row }) => (
+          <div className="text-left font-medium">{row.getValue("nome")}</div>
+        ),
       },
       {
         accessorKey: "quantidadeProdutos",
-        header: "Produtos Vinculados",
+        header: () => <div className="text-center">Produtos Vinculados</div>,
+        cell: ({ row }: { row: Row }) => (
+          <div className="text-center font-medium">
+            {row.getValue("quantidadeProdutos")}
+          </div>
+        ),
       },
     ];
 
     if (hasDescription) {
       baseColumns.splice(1, 0, {
         accessorKey: "descricao",
-        header: "Descrição",
+        header: () => <div className="text-left">Descrição</div>,
+        cell: ({ row }: { row: Row }) => (
+          <div
+            className="text-left max-w-[200px] lg:max-w-[300px] truncate"
+            title={row.getValue("descricao")}
+          >
+            {row.getValue("descricao")}
+          </div>
+        ),
       });
     }
 
@@ -99,10 +119,75 @@ export default function ConfiguracoesPage() {
     setShowModal(false);
   };
 
+  // Renderiza um card para visualização mobile
+  const renderMobileCard = (item: ConfigItem, hasDescription: boolean) => (
+    <div
+      key={item.id}
+      className="bg-white p-4 rounded-lg border border-gray-200 space-y-3"
+    >
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-medium text-gray-900">{item.nome}</h3>
+          {hasDescription && item.descricao && (
+            <p className="text-sm text-gray-500 mt-1">{item.descricao}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleEdit(item)}
+            className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+            title="Editar"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => handleDelete(item)}
+            className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+            title="Excluir"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 6h18" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <span className="text-sm text-gray-500">Produtos vinculados</span>
+        <span className="text-sm font-medium text-gray-900">
+          {item.quantidadeProdutos}
+        </span>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 py-6 md:py-8">
       {/* Breadcrumb */}
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <Breadcrumb
           items={[
             { label: "Configurações", href: "/configuracoes", active: true },
@@ -111,20 +196,20 @@ export default function ConfiguracoesPage() {
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <Tab.Group selectedIndex={activeTab} onChange={setActiveTab}>
           {/* Cabeçalho com Tabs */}
-          <div className="border-b border-gray-200">
-            <Tab.List className="flex space-x-8 px-6">
+          <div className="border-b border-gray-200 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
+            <Tab.List className="flex min-w-full">
               {tabs.map((tab) => (
                 <Tab
                   key={tab.name}
                   className={({ selected }) =>
                     cn(
-                      "py-4 text-sm font-medium border-b-2 outline-none",
+                      "flex-1 min-w-[120px] py-3 md:py-4 px-3 md:px-6 text-sm font-medium whitespace-nowrap border-b-2 focus:outline-none transition-colors duration-200",
                       selected
-                        ? "text-blue-600 border-blue-600"
-                        : "text-gray-500 border-transparent hover:text-blue-600 hover:border-blue-600"
+                        ? "text-blue-600 border-blue-600 bg-blue-50/50"
+                        : "text-gray-500 border-transparent hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50/30"
                     )
                   }
                 >
@@ -137,25 +222,50 @@ export default function ConfiguracoesPage() {
           {/* Conteúdo das Tabs */}
           <Tab.Panels>
             {tabs.map((tab, idx) => (
-              <Tab.Panel key={idx} className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">
+              <Tab.Panel key={idx} className="p-4 md:p-6 space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <h2 className="text-lg md:text-xl font-semibold text-gray-900">
                     Gestão de {tab.name}
                   </h2>
                   <button
                     onClick={handleAdd}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="w-full sm:w-auto min-w-[140px] bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                   >
-                    Adicionar {tab.name.slice(0, -1)}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    <span>Adicionar {tab.name.slice(0, -1)}</span>
                   </button>
                 </div>
 
-                <DataTable
-                  data={tab.data}
-                  columns={getColumns(tab.hasDescription)}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
+                {/* Visualização Mobile (Cards) */}
+                <div className="sm:hidden space-y-4">
+                  {tab.data.map((item) =>
+                    renderMobileCard(item, tab.hasDescription)
+                  )}
+                </div>
+
+                {/* Visualização Desktop (Tabela) */}
+                <div className="hidden sm:block overflow-x-auto rounded-lg border border-gray-200">
+                  <div className="min-w-full inline-block align-middle">
+                    <DataTable
+                      data={tab.data}
+                      columns={getColumns(tab.hasDescription)}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  </div>
+                </div>
               </Tab.Panel>
             ))}
           </Tab.Panels>
@@ -169,6 +279,7 @@ export default function ConfiguracoesPage() {
         title={`${editingItem ? "Editar" : "Adicionar"} ${tabs[
           activeTab
         ].name.slice(0, -1)}`}
+        size="md"
       >
         <FormLayout
           onSubmit={methods.handleSubmit(handleSubmit)}
@@ -179,7 +290,7 @@ export default function ConfiguracoesPage() {
           onCancel={() => setShowModal(false)}
         >
           <div className="space-y-4">
-            <FormField label="Nome" className="space-y-1">
+            <FormField label="Nome" className="space-y-2">
               <input
                 type="text"
                 {...methods.register("nome")}
@@ -191,7 +302,7 @@ export default function ConfiguracoesPage() {
             </FormField>
 
             {tabs[activeTab].hasDescription && (
-              <FormField label="Descrição" className="space-y-1">
+              <FormField label="Descrição" className="space-y-2">
                 <textarea
                   {...methods.register("descricao")}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"

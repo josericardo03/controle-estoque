@@ -6,13 +6,20 @@ import * as React from "react";
 import { useFormContext } from "react-hook-form"; // Para integração com formulários
 import { cn } from "../../lib/utils"; // Função utilitária para combinar classes CSS
 
-interface InputMaskProps {
+type BaseInputProps = Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange"
+>;
+
+interface InputMaskProps extends BaseInputProps {
   name: string;
   label?: string;
   placeholder?: string;
   className?: string;
-  mask: "cpf" | "telefone" | "cep";
+  mask: "cpf" | "cnpj" | "telefone" | "cep";
   width?: "sm" | "md" | "lg" | "full"; // Novo prop para controlar largura
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 export function InputMask({
@@ -21,13 +28,20 @@ export function InputMask({
   placeholder,
   className,
   mask,
-  width = "full", // Valor padrão
+  width = "full",
+  value: controlledValue,
+  onChange: controlledOnChange,
+  ...props
 }: InputMaskProps) {
-  const {
-    register,
-    formState: { errors },
-  } = useFormContext();
-  const error = errors[name]?.message as string | undefined;
+  // Tenta obter o contexto do formulário, se disponível
+  const formContext = useFormContext();
+  const { register, formState } = formContext || {};
+  const error = formState?.errors?.[name]?.message as string | undefined;
+
+  // Estado local para quando não houver contexto de formulário
+  const [uncontrolledValue, setUncontrolledValue] = React.useState("");
+  const isControlled = controlledValue !== undefined;
+  const finalValue = isControlled ? controlledValue : uncontrolledValue;
 
   const widthClasses = {
     sm: "w-32",
@@ -50,6 +64,14 @@ export function InputMask({
           .replace(/(\d{3})(\d{1,2})/, "$1-$2")
           .replace(/(-\d{2})\d+?$/, "$1");
 
+      case "cnpj":
+        return numbers
+          .replace(/(\d{2})(\d)/, "$1.$2")
+          .replace(/(\d{3})(\d)/, "$1.$2")
+          .replace(/(\d{3})(\d)/, "$1/$2")
+          .replace(/(\d{4})(\d{1,2})/, "$1-$2")
+          .replace(/(-\d{2})\d+?$/, "$1");
+
       case "telefone":
         return numbers
           .replace(/(\d{2})(\d)/, "($1) $2")
@@ -67,9 +89,30 @@ export function InputMask({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    e.target.value = applyMask(value);
+    const maskedValue = applyMask(e.target.value);
+    e.target.value = maskedValue;
+
+    if (!formContext) {
+      setUncontrolledValue(maskedValue);
+      controlledOnChange?.(maskedValue);
+    }
   };
+
+  const inputProps = formContext
+    ? {
+        ...register(name, {
+          onChange: (e) => {
+            handleChange(e);
+            register(name).onChange(e);
+          },
+        }),
+      }
+    : {
+        name,
+        value: finalValue,
+        onChange: handleChange,
+        ...props,
+      };
 
   return (
     <div className="space-y-1">
@@ -81,12 +124,8 @@ export function InputMask({
       )}
 
       <input
-        {...register(name)}
+        {...inputProps}
         placeholder={placeholder}
-        onChange={(e) => {
-          handleChange(e);
-          register(name).onChange(e);
-        }}
         className={cn(
           "flex h-9 rounded-md border border-blue-500/20 bg-transparent px-3 py-1",
           "text-sm text-blue-500 placeholder:text-blue-500/50",

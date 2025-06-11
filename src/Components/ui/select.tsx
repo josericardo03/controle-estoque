@@ -23,6 +23,8 @@ interface SelectInputProps {
   isClearable?: boolean;
   error?: string;
   control?: any;
+  value?: SelectOption | null;
+  onChange?: (option: SelectOption | null) => void;
 }
 
 const customStyles: StylesConfig<SelectOption, boolean> = {
@@ -97,6 +99,8 @@ export function SelectInput({
   isClearable = true,
   error,
   control: controlProp,
+  value,
+  onChange,
 }: SelectInputProps) {
   const formContext = useFormContext();
   const control = controlProp || formContext?.control;
@@ -117,6 +121,8 @@ export function SelectInput({
           className={cn("text-sm", className)}
           styles={customStyles}
           instanceId={name}
+          value={value}
+          onChange={onChange}
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>

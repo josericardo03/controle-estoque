@@ -5,6 +5,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { SelectInput } from "@/Components/ui/select";
 import { InputMask } from "@/Components/ui/input-mask";
+import Link from "next/link";
 
 // Interface para o tipo de produto
 interface Produto {
@@ -328,7 +329,13 @@ export default function ProdutosPage() {
                     {produto.unidade}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500 space-x-2">
-                    <button className="text-blue-500 hover:text-blue-600">
+                    <Link
+                      href={`/produtos/${produto.id}`}
+                      className="text-blue-500 hover:text-blue-600"
+                    >
+                      Visualizar
+                    </Link>
+                    <button className="text-yellow-500 hover:text-yellow-600">
                       Editar
                     </button>
                     <button className="text-red-500 hover:text-red-600">

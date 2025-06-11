@@ -2,8 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { SelectInput } from "@/Components/ui/select";
+import { Modal } from "@/Components/ui/modal";
+import {
+  FormLayout,
+  FormSection,
+  FormField,
+} from "@/Components/ui/form-layout";
 
 interface UnidadeProduto {
   id: string;
@@ -180,6 +187,12 @@ export default function ProdutoDetalhesPage({
   const [produto] = useState<ProdutoDetalhado>(produtoExemplo);
   const [unidadeSelecionada, setUnidadeSelecionada] =
     useState<UnidadeProduto | null>(null);
+  const [showNovaUnidade, setShowNovaUnidade] = useState(false);
+  const [showEditarUnidade, setShowEditarUnidade] = useState(false);
+  const [unidadeParaEditar, setUnidadeParaEditar] =
+    useState<UnidadeProduto | null>(null);
+  const methodsNovaUnidade = useForm();
+  const methodsEditarUnidade = useForm();
   const [filtros, setFiltros] = useState({
     busca: "",
     tipoBusca: "codigo",
@@ -189,6 +202,8 @@ export default function ProdutoDetalhesPage({
     dataVendaFim: "",
     status: "",
   });
+  const [statusSelecionado, setStatusSelecionado] =
+    useState<string>("disponivel");
 
   const statusClasses = {
     disponivel: "bg-green-100 text-green-800",
@@ -280,15 +295,53 @@ export default function ProdutoDetalhesPage({
     return true;
   });
 
+  const handleSubmitNovaUnidade = (data: any) => {
+    console.log("Nova unidade:", data);
+    setShowNovaUnidade(false);
+  };
+
   const handleEditarUnidade = (unidade: UnidadeProduto) => {
-    // Implementar lógica de edição
-    console.log("Editar unidade:", unidade);
+    setUnidadeParaEditar(unidade);
+    methodsEditarUnidade.reset({
+      status: unidade.status,
+      dataEntrada: unidade.dataEntrada,
+      dataVenda: unidade.dataVenda || "",
+      precoVenda: unidade.precoVenda || "",
+      descricao: unidade.descricao || "",
+      observacoes: unidade.observacoes || "",
+      comprador: unidade.comprador || "",
+      codigosUnicos: unidade.codigosUnicos.map((codigo) => ({
+        tipo: codigo.tipo,
+        codigo: codigo.codigo,
+        descricao: codigo.descricao || "",
+      })),
+    });
+    setStatusSelecionado(unidade.status);
+    setShowEditarUnidade(true);
+  };
+
+  const handleSubmitEditarUnidade = (data: any) => {
+    console.log("Editar unidade:", data);
+    setShowEditarUnidade(false);
   };
 
   const handleExcluirUnidade = (unidade: UnidadeProduto) => {
     // Implementar lógica de exclusão
     console.log("Excluir unidade:", unidade);
   };
+
+  // Opções de status para nova unidade (sem vendido)
+  const novaUnidadeStatusOptions = [
+    { value: "disponivel", label: "Disponível" },
+    { value: "reservado", label: "Reservado" },
+  ];
+
+  // Opções de status para edição (incluindo vendido)
+  const editarStatusOptions = [
+    { value: "disponivel", label: "Disponível" },
+    { value: "reservado", label: "Reservado" },
+    { value: "vendido", label: "Vendido" },
+  ];
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -390,9 +443,7 @@ export default function ProdutoDetalhesPage({
               Unidades do Produto
             </h2>
             <button
-              onClick={() => {
-                /* Implementar adição de nova unidade */
-              }}
+              onClick={() => setShowNovaUnidade(true)}
               className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
             >
               Nova Unidade
@@ -608,6 +659,349 @@ export default function ProdutoDetalhesPage({
           </div>
         </div>
       </div>
+
+      {/* Modal de Nova Unidade */}
+      <Modal
+        isOpen={showNovaUnidade}
+        onClose={() => setShowNovaUnidade(false)}
+        title="Nova Unidade"
+        size="lg"
+      >
+        <FormProvider {...methodsNovaUnidade}>
+          <FormLayout
+            title="Cadastro de Nova Unidade"
+            onSubmit={methodsNovaUnidade.handleSubmit(handleSubmitNovaUnidade)}
+            submitText="Salvar"
+            cancelText="Cancelar"
+            onCancel={() => setShowNovaUnidade(false)}
+          >
+            <FormSection>
+              <FormField label="Status">
+                <SelectInput
+                  name="status"
+                  options={novaUnidadeStatusOptions}
+                  placeholder="Selecione o status"
+                  value={
+                    novaUnidadeStatusOptions.find(
+                      (o) => o.value === statusSelecionado
+                    ) || null
+                  }
+                  onChange={(option) =>
+                    setStatusSelecionado(option?.value || "disponivel")
+                  }
+                />
+              </FormField>
+
+              <FormField label="Data de Entrada">
+                <input
+                  type="date"
+                  {...methodsNovaUnidade.register("dataEntrada")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </FormField>
+
+              <FormField label="Preço de Venda">
+                <input
+                  type="number"
+                  step="0.01"
+                  {...methodsNovaUnidade.register("precoVenda")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  placeholder="0,00"
+                />
+              </FormField>
+
+              <FormField label="Descrição" fullWidth>
+                <textarea
+                  {...methodsNovaUnidade.register("descricao")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  rows={3}
+                  placeholder="Descrição da unidade"
+                />
+              </FormField>
+
+              <FormField label="Observações" fullWidth>
+                <textarea
+                  {...methodsNovaUnidade.register("observacoes")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  rows={3}
+                  placeholder="Observações adicionais"
+                />
+              </FormField>
+            </FormSection>
+
+            <FormSection title="Códigos Únicos">
+              <div className="col-span-2 space-y-4">
+                {/* IMEI 1 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="IMEI 1">
+                    <input
+                      type="text"
+                      {...methodsNovaUnidade.register("codigosUnicos.0.codigo")}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Digite o IMEI 1"
+                    />
+                  </FormField>
+                  <FormField label="Descrição IMEI 1">
+                    <input
+                      type="text"
+                      {...methodsNovaUnidade.register(
+                        "codigosUnicos.0.descricao"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Ex: Principal"
+                    />
+                    <input
+                      type="hidden"
+                      {...methodsNovaUnidade.register("codigosUnicos.0.tipo")}
+                      value="IMEI 1"
+                    />
+                  </FormField>
+                </div>
+
+                {/* IMEI 2 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="IMEI 2">
+                    <input
+                      type="text"
+                      {...methodsNovaUnidade.register("codigosUnicos.1.codigo")}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Digite o IMEI 2"
+                    />
+                  </FormField>
+                  <FormField label="Descrição IMEI 2">
+                    <input
+                      type="text"
+                      {...methodsNovaUnidade.register(
+                        "codigosUnicos.1.descricao"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Ex: Secundário"
+                    />
+                    <input
+                      type="hidden"
+                      {...methodsNovaUnidade.register("codigosUnicos.1.tipo")}
+                      value="IMEI 2"
+                    />
+                  </FormField>
+                </div>
+
+                {/* Número de Série */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Número de Série">
+                    <input
+                      type="text"
+                      {...methodsNovaUnidade.register("codigosUnicos.2.codigo")}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Digite o número de série"
+                    />
+                  </FormField>
+                  <FormField label="Descrição Número de Série">
+                    <input
+                      type="text"
+                      {...methodsNovaUnidade.register(
+                        "codigosUnicos.2.descricao"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Ex: S/N"
+                    />
+                    <input
+                      type="hidden"
+                      {...methodsNovaUnidade.register("codigosUnicos.2.tipo")}
+                      value="Número de Série"
+                    />
+                  </FormField>
+                </div>
+              </div>
+            </FormSection>
+          </FormLayout>
+        </FormProvider>
+      </Modal>
+
+      {/* Modal de Editar Unidade */}
+      <Modal
+        isOpen={showEditarUnidade}
+        onClose={() => setShowEditarUnidade(false)}
+        title="Editar Unidade"
+        size="lg"
+      >
+        <FormProvider {...methodsEditarUnidade}>
+          <FormLayout
+            title="Edição de Unidade"
+            onSubmit={methodsEditarUnidade.handleSubmit(
+              handleSubmitEditarUnidade
+            )}
+            submitText="Salvar"
+            cancelText="Cancelar"
+            onCancel={() => setShowEditarUnidade(false)}
+          >
+            <FormSection>
+              <FormField label="Status">
+                <SelectInput
+                  name="status"
+                  options={editarStatusOptions}
+                  placeholder="Selecione o status"
+                  value={
+                    editarStatusOptions.find(
+                      (o) => o.value === statusSelecionado
+                    ) || null
+                  }
+                  onChange={(option) =>
+                    setStatusSelecionado(option?.value || "disponivel")
+                  }
+                />
+              </FormField>
+
+              <FormField label="Data de Entrada">
+                <input
+                  type="date"
+                  {...methodsEditarUnidade.register("dataEntrada")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              </FormField>
+
+              {statusSelecionado === "vendido" && (
+                <>
+                  <FormField label="Data de Venda">
+                    <input
+                      type="date"
+                      {...methodsEditarUnidade.register("dataVenda")}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                    />
+                  </FormField>
+
+                  <FormField label="Comprador">
+                    <input
+                      type="text"
+                      {...methodsEditarUnidade.register("comprador")}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Nome do comprador"
+                    />
+                  </FormField>
+                </>
+              )}
+
+              <FormField label="Preço de Venda">
+                <input
+                  type="number"
+                  step="0.01"
+                  {...methodsEditarUnidade.register("precoVenda")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  placeholder="0,00"
+                />
+              </FormField>
+
+              <FormField label="Descrição" fullWidth>
+                <textarea
+                  {...methodsEditarUnidade.register("descricao")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  rows={3}
+                  placeholder="Descrição da unidade"
+                />
+              </FormField>
+
+              <FormField label="Observações" fullWidth>
+                <textarea
+                  {...methodsEditarUnidade.register("observacoes")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  rows={3}
+                  placeholder="Observações adicionais"
+                />
+              </FormField>
+            </FormSection>
+
+            <FormSection title="Códigos Únicos">
+              <div className="col-span-2 space-y-4">
+                {/* IMEI 1 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="IMEI 1">
+                    <input
+                      type="text"
+                      {...methodsEditarUnidade.register(
+                        "codigosUnicos.0.codigo"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Digite o IMEI 1"
+                    />
+                  </FormField>
+                  <FormField label="Descrição IMEI 1">
+                    <input
+                      type="text"
+                      {...methodsEditarUnidade.register(
+                        "codigosUnicos.0.descricao"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Ex: Principal"
+                    />
+                    <input
+                      type="hidden"
+                      {...methodsEditarUnidade.register("codigosUnicos.0.tipo")}
+                      value="IMEI 1"
+                    />
+                  </FormField>
+                </div>
+
+                {/* IMEI 2 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="IMEI 2">
+                    <input
+                      type="text"
+                      {...methodsEditarUnidade.register(
+                        "codigosUnicos.1.codigo"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Digite o IMEI 2"
+                    />
+                  </FormField>
+                  <FormField label="Descrição IMEI 2">
+                    <input
+                      type="text"
+                      {...methodsEditarUnidade.register(
+                        "codigosUnicos.1.descricao"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Ex: Secundário"
+                    />
+                    <input
+                      type="hidden"
+                      {...methodsEditarUnidade.register("codigosUnicos.1.tipo")}
+                      value="IMEI 2"
+                    />
+                  </FormField>
+                </div>
+
+                {/* Número de Série */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Número de Série">
+                    <input
+                      type="text"
+                      {...methodsEditarUnidade.register(
+                        "codigosUnicos.2.codigo"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Digite o número de série"
+                    />
+                  </FormField>
+                  <FormField label="Descrição Número de Série">
+                    <input
+                      type="text"
+                      {...methodsEditarUnidade.register(
+                        "codigosUnicos.2.descricao"
+                      )}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Ex: S/N"
+                    />
+                    <input
+                      type="hidden"
+                      {...methodsEditarUnidade.register("codigosUnicos.2.tipo")}
+                      value="Número de Série"
+                    />
+                  </FormField>
+                </div>
+              </div>
+            </FormSection>
+          </FormLayout>
+        </FormProvider>
+      </Modal>
     </div>
   );
 }

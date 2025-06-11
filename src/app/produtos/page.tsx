@@ -5,6 +5,12 @@ import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { SelectInput } from "@/Components/ui/select";
 import { InputMask } from "@/Components/ui/input-mask";
+import { Modal } from "@/Components/ui/modal";
+import {
+  FormLayout,
+  FormSection,
+  FormField,
+} from "@/Components/ui/form-layout";
 import Link from "next/link";
 
 // Interface para o tipo de produto
@@ -51,8 +57,13 @@ const produtosExemplo: Produto[] = [
 
 export default function ProdutosPage() {
   const [showForm, setShowForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [produtos] = useState<Produto[]>(produtosExemplo);
-  const methods = useForm();
+  const [produtoParaEditar, setProdutoParaEditar] = useState<Produto | null>(
+    null
+  );
+  const methodsNovo = useForm();
+  const methodsEditar = useForm();
 
   // Opções para os selects
   const categorias = [
@@ -85,6 +96,27 @@ export default function ProdutosPage() {
     { value: "42", label: "42" },
     { value: "44", label: "44" },
   ];
+
+  const handleEditarProduto = (produto: Produto) => {
+    setProdutoParaEditar(produto);
+    methodsEditar.reset({
+      nome: produto.nome,
+      descricao: produto.descricao,
+      preco: produto.preco,
+      quantidade: produto.quantidade,
+      codigo: produto.codigo,
+      categorias: produto.categorias,
+      cores: produto.cores,
+      unidade: produto.unidade,
+      tamanho: produto.tamanho,
+    });
+    setShowEditForm(true);
+  };
+
+  const handleSubmitEditar = (data: any) => {
+    console.log("Editar produto:", data);
+    setShowEditForm(false);
+  };
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -140,7 +172,7 @@ export default function ProdutosPage() {
 
       {showForm ? (
         /* Formulário de Cadastro/Edição */
-        <FormProvider {...methods}>
+        <FormProvider {...methodsNovo}>
           <form className="bg-white rounded-md shadow p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -335,7 +367,10 @@ export default function ProdutosPage() {
                     >
                       Visualizar
                     </Link>
-                    <button className="text-yellow-500 hover:text-yellow-600">
+                    <button
+                      onClick={() => handleEditarProduto(produto)}
+                      className="text-yellow-500 hover:text-yellow-600"
+                    >
                       Editar
                     </button>
                     <button className="text-red-500 hover:text-red-600">
@@ -348,6 +383,106 @@ export default function ProdutosPage() {
           </table>
         </div>
       )}
+
+      {/* Modal de Edição */}
+      <Modal
+        isOpen={showEditForm}
+        onClose={() => setShowEditForm(false)}
+        title="Editar Produto"
+        size="lg"
+      >
+        <FormProvider {...methodsEditar}>
+          <FormLayout
+            title="Edição de Produto"
+            onSubmit={methodsEditar.handleSubmit(handleSubmitEditar)}
+            submitText="Salvar"
+            cancelText="Cancelar"
+            onCancel={() => setShowEditForm(false)}
+          >
+            <FormSection>
+              <FormField label="Nome">
+                <input
+                  type="text"
+                  {...methodsEditar.register("nome")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  placeholder="Nome do produto"
+                />
+              </FormField>
+
+              <FormField label="Código">
+                <input
+                  type="text"
+                  {...methodsEditar.register("codigo")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  placeholder="Código do produto"
+                />
+              </FormField>
+
+              <FormField label="Descrição" fullWidth>
+                <textarea
+                  {...methodsEditar.register("descricao")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  rows={3}
+                  placeholder="Descrição do produto"
+                />
+              </FormField>
+
+              <FormField label="Preço">
+                <input
+                  type="number"
+                  step="0.01"
+                  {...methodsEditar.register("preco")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  placeholder="0,00"
+                />
+              </FormField>
+
+              <FormField label="Quantidade">
+                <input
+                  type="number"
+                  {...methodsEditar.register("quantidade")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2"
+                  placeholder="0"
+                />
+              </FormField>
+
+              <FormField label="Categorias">
+                <SelectInput
+                  name="categorias"
+                  options={categorias}
+                  placeholder="Selecione as categorias"
+                  isMulti={true}
+                />
+              </FormField>
+
+              <FormField label="Cores">
+                <SelectInput
+                  name="cores"
+                  options={cores}
+                  placeholder="Selecione as cores"
+                  isMulti={true}
+                />
+              </FormField>
+
+              <FormField label="Unidade">
+                <SelectInput
+                  name="unidade"
+                  options={unidades}
+                  placeholder="Selecione a unidade"
+                />
+              </FormField>
+
+              <FormField label="Tamanho">
+                <SelectInput
+                  name="tamanho"
+                  options={tamanhos}
+                  placeholder="Selecione o tamanho"
+                />
+              </FormField>
+            </FormSection>
+          </FormLayout>
+        </FormProvider>
+      </Modal>
     </div>
   );
 }

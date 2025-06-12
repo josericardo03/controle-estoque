@@ -1,9 +1,13 @@
 import "./globals.css";
-import Link from "next/link";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import Navbar from "@/Components/Navbar";
 
-export const metadata = {
-  title: "Sistema de Controle de Estoque",
-  description: "Sistema para gestão de estoque e produtos",
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Controle de Estoque",
+  description: "Sistema de controle de estoque",
 };
 
 export default function RootLayout({
@@ -13,13 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>
-        <div className="min-h-screen bg-gray-50">
-          {/* Barra de navegação */}
-
-          {/* Conteúdo principal */}
-          <main>{children}</main>
-        </div>
+      <body className={inter.className}>
+        <Navbar />
+        <main className="min-h-screen bg-gray-50">{children}</main>
       </body>
     </html>
   );

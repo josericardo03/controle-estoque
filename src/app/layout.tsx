@@ -45,6 +45,12 @@ export default function RootLayout({
                       Negociações
                     </Link>
                     <Link
+                      href="/usuarios"
+                      className="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Usuários
+                    </Link>
+                    <Link
                       href="/configuracoes"
                       className="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
                     >

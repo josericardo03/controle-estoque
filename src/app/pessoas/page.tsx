@@ -145,106 +145,6 @@ export default function PessoasPage() {
         );
       },
     },
-    {
-      id: "acoes",
-      accessorKey: "acoes",
-      header: "Ações",
-      cell: ({ row }: { row: Row<Pessoa> }) => {
-        const pessoa = row.original;
-        return (
-          <>
-            {/* Versão Desktop */}
-            <div className="hidden md:flex items-center justify-end gap-2">
-              <button
-                key={`view-desktop-${pessoa.id}`}
-                onClick={() => handleView(pessoa)}
-                className="text-blue-600 hover:text-blue-800"
-              >
-                Visualizar
-              </button>
-              <button
-                key={`edit-desktop-${pessoa.id}`}
-                onClick={() => handleEdit(pessoa)}
-                className="text-yellow-600 hover:text-yellow-800"
-              >
-                Editar
-              </button>
-              <button
-                key={`delete-desktop-${pessoa.id}`}
-                onClick={() => handleDelete(pessoa)}
-                className="text-red-600 hover:text-red-800"
-              >
-                Excluir
-              </button>
-            </div>
-
-            {/* Versão Mobile */}
-            <div className="md:hidden flex items-center justify-end gap-1">
-              <button
-                key={`view-mobile-${pessoa.id}`}
-                onClick={() => handleView(pessoa)}
-                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              </button>
-              <button
-                key={`edit-mobile-${pessoa.id}`}
-                onClick={() => handleEdit(pessoa)}
-                className="p-1.5 text-yellow-600 hover:bg-yellow-50 rounded-lg"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-              </button>
-              <button
-                key={`delete-mobile-${pessoa.id}`}
-                onClick={() => handleDelete(pessoa)}
-                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 6h18" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-              </button>
-            </div>
-          </>
-        );
-      },
-    },
   ];
 
   const handleEdit = (pessoa: Pessoa) => {
@@ -354,7 +254,7 @@ export default function PessoasPage() {
         </div>
 
         {/* Tabela para Desktop e Cards para Mobile */}
-        <div className="md:block">
+        <div className="w-full">
           {/* Versão Desktop */}
           <div className="hidden md:block">
             <DataTable
@@ -367,19 +267,16 @@ export default function PessoasPage() {
           </div>
 
           {/* Cards Mobile */}
-          <div className="md:hidden divide-y divide-gray-200">
+          <div className="md:hidden space-y-4">
             {pessoasMock.map((pessoa) => (
-              <div key={`mobile-card-${pessoa.id}`} className="p-4">
-                <div className="flex flex-col gap-3">
-                  {/* Cabeçalho do Card */}
+              <div key={pessoa.id} className="bg-white rounded-lg shadow p-4">
+                <div className="flex flex-col gap-2">
                   <div className="flex items-start justify-between">
-                    <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">
+                    <div>
+                      <h3 className="font-medium text-gray-900">
                         {pessoa.nome}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {pessoa.email}
-                      </span>
+                      </h3>
+                      <p className="text-sm text-gray-500">{pessoa.email}</p>
                     </div>
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
@@ -394,76 +291,77 @@ export default function PessoasPage() {
                     </span>
                   </div>
 
-                  {/* Informações de Contato */}
-                  <div className="flex flex-col gap-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <svg
-                        className="h-4 w-4 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect x="2" y="4" width="20" height="16" rx="2" />
-                        <path d="M7 8h10M7 12h10M7 16h10" />
-                      </svg>
-                      {pessoa.documento}
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <svg
-                        className="h-4 w-4 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                      </svg>
-                      {pessoa.telefone}
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <svg
-                        className="h-4 w-4 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      <div className="flex flex-col">
-                        <span>{`${pessoa.endereco.logradouro}, ${pessoa.endereco.numero}`}</span>
-                        <span className="text-gray-400">{`${pessoa.endereco.cidade} - ${pessoa.endereco.estado}`}</span>
-                      </div>
-                    </div>
+                  <div className="text-sm">
+                    <p className="text-gray-900">{pessoa.documento}</p>
+                    <p className="text-gray-500">{pessoa.telefone}</p>
                   </div>
 
-                  {/* Ações */}
+                  <div className="text-sm">
+                    <p className="text-gray-900">
+                      {pessoa.endereco.logradouro}, {pessoa.endereco.numero}
+                    </p>
+                    <p className="text-gray-500">
+                      {pessoa.endereco.cidade} - {pessoa.endereco.estado}
+                    </p>
+                  </div>
+
                   <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
                     <button
-                      key={`view-card-${pessoa.id}`}
                       onClick={() => handleView(pessoa)}
-                      className="inline-flex items-center justify-center p-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg"
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                      title="Visualizar"
                     >
-                      Visualizar
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
                     </button>
                     <button
-                      key={`edit-card-${pessoa.id}`}
                       onClick={() => handleEdit(pessoa)}
-                      className="inline-flex items-center justify-center p-2 text-sm font-medium text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded-lg"
+                      className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
+                      title="Editar"
                     >
-                      Editar
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
                     </button>
                     <button
-                      key={`delete-card-${pessoa.id}`}
                       onClick={() => handleDelete(pessoa)}
-                      className="inline-flex items-center justify-center p-2 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      title="Excluir"
                     >
-                      Excluir
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
                     </button>
                   </div>
                 </div>

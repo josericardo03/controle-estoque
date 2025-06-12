@@ -117,10 +117,10 @@ export function DataTable<TData>({
         <table className="w-full text-sm">
           <thead className="border-b bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
+              <tr key={`header-group-${headerGroup.id}`}>
                 {headerGroup.headers.map((header) => (
                   <th
-                    key={header.id}
+                    key={`header-${headerGroup.id}-${header.id}`}
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     {!header.isPlaceholder &&
@@ -136,9 +136,12 @@ export function DataTable<TData>({
           <tbody className="bg-white divide-y divide-gray-200">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50">
+                <tr key={`row-${row.id}`} className="hover:bg-gray-50">
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
+                    <td
+                      key={`cell-${row.id}-${cell.column.id}`}
+                      className="px-6 py-4 whitespace-nowrap"
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -150,10 +153,8 @@ export function DataTable<TData>({
             ) : (
               <tr>
                 <td
-                  colSpan={
-                    columns.length + (onEdit || onDelete || onView ? 1 : 0)
-                  }
-                  className="h-24 text-center"
+                  colSpan={columns.length}
+                  className="h-24 text-center text-gray-500"
                 >
                   Nenhum resultado encontrado.
                 </td>
@@ -178,7 +179,7 @@ export function DataTable<TData>({
               className="h-8 w-[70px] rounded-md border border-gray-200"
             >
               {[10, 20, 30, 40, 50].map((pageSize) => (
-                <option key={pageSize} value={pageSize}>
+                <option key={`page-size-${pageSize}`} value={pageSize}>
                   {pageSize}
                 </option>
               ))}

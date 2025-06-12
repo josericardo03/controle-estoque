@@ -113,6 +113,11 @@ export function SelectInput({
 }: SelectInputProps) {
   const formContext = useFormContext();
   const control = controlProp || formContext?.control;
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!control) {
     const Select = DefaultSelect as any;
@@ -132,7 +137,7 @@ export function SelectInput({
           instanceId={name}
           value={value}
           onChange={onChange}
-          menuPortalTarget={document.body}
+          menuPortalTarget={mounted ? document.body : null}
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
@@ -161,7 +166,7 @@ export function SelectInput({
               className={cn("text-sm", className)}
               styles={customStyles}
               instanceId={name}
-              menuPortalTarget={document.body}
+              menuPortalTarget={mounted ? document.body : null}
               value={
                 isMulti
                   ? options.filter((option) =>

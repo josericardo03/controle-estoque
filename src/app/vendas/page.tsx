@@ -451,12 +451,54 @@ export default function CaixaPage() {
                         </p>
                         <p className="text-sm text-gray-600">{op.data}</p>
                         {caixaSelecionado.status === "aberto" && (
-                          <button
-                            onClick={() => handleEditarOperacao(op)}
-                            className="text-blue-600 hover:text-blue-800 text-sm"
-                          >
-                            Editar
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditarOperacao(op)}
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => {
+                                const email =
+                                  op.cliente?.email || op.fornecedor;
+                                if (email) {
+                                  window.location.href = `mailto:${email}?subject=Detalhes da ${
+                                    op.tipo === "venda" ? "Venda" : "Compra"
+                                  }&body=Detalhes da operação:%0D%0A%0D%0A${op.itens
+                                    .map(
+                                      (item) =>
+                                        `- ${item.produto}: ${
+                                          item.quantidade
+                                        }x R$ ${item.subtotal.toFixed(2)}`
+                                    )
+                                    .join(
+                                      "%0D%0A"
+                                    )}%0D%0A%0D%0ATotal: R$ ${op.total.toFixed(
+                                    2
+                                  )}`;
+                                } else {
+                                  alert(
+                                    "Email não disponível para esta operação"
+                                  );
+                                }
+                              }}
+                              className="text-green-600 hover:text-green-800 text-sm"
+                            >
+                              Email
+                            </button>
+                            <button
+                              onClick={() => {
+                                // Aqui você pode implementar a lógica para gerar a nota fiscal
+                                alert(
+                                  "Funcionalidade de emissão de nota fiscal será implementada em breve"
+                                );
+                              }}
+                              className="text-purple-600 hover:text-purple-800 text-sm"
+                            >
+                              NF
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

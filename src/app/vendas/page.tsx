@@ -2,24 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { SaleHeader } from "@/Components/ui/sale-header";
 import { ProductSearch } from "@/Components/ui/product-search";
 import { ProductArea } from "@/Components/ui/product-area";
 import { SaleSummary } from "@/Components/ui/sale-summary";
 import { PaymentForm } from "@/Components/ui/payment-form";
-import { SaleActions } from "@/Components/ui/sale-actions";
 import { ClientSelect } from "@/Components/ui/client-select";
 import {
   Venda,
   Vendedor,
   VendedorOption,
-  StatusVendaOption,
   Caixa,
   CaixaOption,
   Cliente,
   ClienteOption,
   ItemVenda,
+  OperacaoCaixa,
+  CaixaFechado,
+  Pagamento,
 } from "@/types/sale";
 
 // Mock data
@@ -28,73 +28,65 @@ const mockVendedores: VendedorOption[] = [
   { value: "2", label: "Maria Santos" },
 ];
 
-const mockCaixas: CaixaOption[] = [
-  { value: "1", label: "1 - Caixa Principal" },
-  { value: "2", label: "2 - Caixa Secundário" },
-];
-
-const mockClientes: ClienteOption[] = [
-  { value: "1", label: "Cliente 1" },
-  { value: "2", label: "Cliente 2" },
-];
-
-const mockStatusVenda: StatusVendaOption[] = [
-  { value: "pendente", label: "Pendente" },
-  { value: "em_andamento", label: "Em Andamento" },
-  { value: "finalizada", label: "Finalizada" },
-  { value: "cancelada", label: "Cancelada" },
-  { value: "suspensa", label: "Suspensa" },
-];
-
-const vendaInicial: Venda = {
-  id: "1",
-  numero: "001",
-  data: new Date().toISOString(),
-  cliente: null,
-  vendedor: {
-    id: "1",
-    nome: "João Silva",
-    email: "joao@email.com",
-    telefone: "123456789",
-  },
-  caixa: {
+const mockCaixas: Caixa[] = [
+  {
     id: "1",
     numero: "1",
     descricao: "Caixa Principal",
     saldo: 1000,
+    status: "aberto",
+    dataAbertura: "01/03/2024 08:00",
+    operacoes: [],
+    sangrias: 0,
+    suprimentos: 0,
   },
-  itens: [],
-  subtotal: 0,
-  desconto: 0,
-  total: 0,
-  formaPagamento: "",
-  valorPagamento: 0,
-  troco: 0,
-  bonus: 0,
-  status: "em_andamento",
-};
+  {
+    id: "2",
+    numero: "2",
+    descricao: "Caixa Secundário",
+    saldo: 500,
+    status: "fechado",
+    dataAbertura: "01/03/2024 08:00",
+    dataFechamento: "01/03/2024 18:00",
+    operacoes: [],
+    sangrias: 0,
+    suprimentos: 0,
+  },
+];
 
-export default function VendasPage() {
-  const [showModal, setShowModal] = useState(false);
-  const [venda, setVenda] = useState<Venda>(vendaInicial);
-  const [valorRecebido, setValorRecebido] = useState("0,00");
-  const [bonusUtilizado, setBonusUtilizado] = useState(0);
-  const [observacoes, setObservacoes] = useState("");
-  const [formasPagamentoSelecionadas, setFormasPagamentoSelecionadas] =
-    useState<string[]>([]);
-  const [valoresPagamento, setValoresPagamento] = useState<
-    Record<string, number>
-  >({});
+const mockClientes: ClienteOption[] = [
+  { value: "1", label: "Cliente 1", bonus: 100 },
+  { value: "2", label: "Cliente 2", bonus: 50 },
+];
+
+const formasPagamento = [
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "cartao_credito", label: "Cartão de Crédito" },
+  { value: "cartao_debito", label: "Cartão de Débito" },
+  { value: "pix", label: "PIX" },
+  { value: "boleto", label: "Boleto" },
+  { value: "bonus", label: "Bônus" },
+];
+
+export default function CaixaPage() {
+  const [caixas, setCaixas] = useState<Caixa[]>(mockCaixas);
+  const [caixaSelecionado, setCaixaSelecionado] = useState<Caixa | null>(null);
+  const [showModalOperacao, setShowModalOperacao] = useState(false);
   const [dataHora, setDataHora] = useState("");
-  const [historicoPagamentos, setHistoricoPagamentos] = useState<
-    Array<{
-      forma: string;
-      valor: number;
-      data: string;
-      bonus?: string;
-    }>
-  >([]);
-  const methods = useForm();
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(
+    null
+  );
+  const [itensOperacao, setItensOperacao] = useState<ItemVenda[]>([]);
+  const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
+  const [formaPagamentoAtual, setFormaPagamentoAtual] = useState("");
+  const [valorPagamentoAtual, setValorPagamentoAtual] = useState("");
+  const [parcelasAtuais, setParcelasAtuais] = useState(1);
+  const [bonusUtilizado, setBonusUtilizado] = useState(0);
+  const [novoBonus, setNovoBonus] = useState("");
+  const [tipoOperacao, setTipoOperacao] = useState<"compra" | "venda">("venda");
+  const [fornecedor, setFornecedor] = useState("");
+  const [operacaoEditando, setOperacaoEditando] =
+    useState<OperacaoCaixa | null>(null);
 
   useEffect(() => {
     const data = new Date();
@@ -110,207 +102,571 @@ export default function VendasPage() {
     );
   }, []);
 
-  const handleVendedorChange = (vendedor: Vendedor) => {
-    setVenda((prev) => ({ ...prev, vendedor }));
+  const handleSelecionarCaixa = (caixa: Caixa) => {
+    setCaixaSelecionado(caixa);
   };
 
-  const handleCaixaChange = (caixa: Caixa) => {
-    setVenda((prev) => ({ ...prev, caixa }));
+  const handleAbrirCaixa = (caixa: Caixa) => {
+    const caixasAtualizados = caixas.map((c) =>
+      c.id === caixa.id
+        ? {
+            ...c,
+            status: "aberto" as const,
+            dataAbertura: new Date().toLocaleString("pt-BR"),
+            operacoes: [],
+          }
+        : c
+    );
+    setCaixas(caixasAtualizados);
+    setCaixaSelecionado(
+      caixasAtualizados.find((c) => c.id === caixa.id) || null
+    );
   };
 
-  const handleAbrirFecharCaixa = () => {
-    // TODO: Implementar lógica de abrir/fechar caixa
-    console.log("Abrir/Fechar Caixa");
-  };
-
-  const handleSangriaSuprimento = (
-    valor: number,
-    tipo: "sangria" | "suprimento"
-  ) => {
-    // TODO: Implementar lógica de sangria/suprimento
-    console.log(`${tipo}: ${valor}`);
+  const handleFecharCaixa = (caixa: Caixa) => {
+    const caixasAtualizados = caixas.map((c) =>
+      c.id === caixa.id
+        ? {
+            ...c,
+            status: "fechado" as const,
+            dataFechamento: new Date().toLocaleString("pt-BR"),
+          }
+        : c
+    );
+    setCaixas(caixasAtualizados);
+    setCaixaSelecionado(null);
   };
 
   const handleAddItem = (item: ItemVenda) => {
-    setVenda((prev) => {
-      const itens = [...prev.itens, item];
-      const subtotal = itens.reduce((acc, item) => acc + item.subtotal, 0);
-      const total = subtotal - prev.desconto;
-      return { ...prev, itens, subtotal, total };
-    });
+    setItensOperacao((prev) => [...prev, item]);
   };
 
   const handleRemoveItem = (itemId: string) => {
-    setVenda((prev) => {
-      const itens = prev.itens.filter((item) => item.id !== itemId);
-      const subtotal = itens.reduce((acc, item) => acc + item.subtotal, 0);
-      const total = subtotal - prev.desconto;
-      return { ...prev, itens, subtotal, total };
-    });
+    setItensOperacao((prev) => prev.filter((item) => item.id !== itemId));
   };
 
-  const handleDescontoChange = (desconto: number) => {
-    setVenda((prev) => {
-      const total = prev.subtotal - desconto;
-      return { ...prev, desconto, total };
-    });
-  };
-
-  const handleFormaPagamentoChange = (formaPagamento: string) => {
-    setVenda((prev) => ({ ...prev, formaPagamento }));
-  };
-
-  const handleValorPagamentoChange = (valorPagamento: number) => {
-    setVenda((prev) => {
-      const troco = valorPagamento - prev.total;
-      return { ...prev, valorPagamento, troco };
-    });
-  };
-
-  const handleAdicionarPagamento = (pagamento: {
-    forma: string;
-    valor: number;
-    data: string;
-    bonus?: string;
-  }) => {
-    setHistoricoPagamentos((prev) => [...prev, pagamento]);
-    setVenda((prev) => ({
-      ...prev,
-      bonus: prev.bonus + (pagamento.forma === "bonus" ? pagamento.valor : 0),
-    }));
-  };
-
-  const handleClienteSelect = (cliente: Cliente | null) => {
-    setVenda((prev) => ({ ...prev, cliente }));
-  };
-
-  const handleFinalizar = () => {
-    if (!venda.cliente) {
-      alert("Selecione um cliente para finalizar a venda");
+  const handleAdicionarPagamento = () => {
+    if (!formaPagamentoAtual) {
+      alert("Selecione uma forma de pagamento");
       return;
     }
 
-    if (venda.itens.length === 0) {
-      alert("Adicione pelo menos um item à venda");
+    const valor = parseFloat(valorPagamentoAtual);
+    if (isNaN(valor) || valor <= 0) {
+      alert("Informe um valor válido");
       return;
     }
 
-    if (historicoPagamentos.length === 0) {
+    if (formaPagamentoAtual === "bonus") {
+      if (!clienteSelecionado) {
+        alert("Selecione um cliente para usar bônus");
+        return;
+      }
+      if (valor > (clienteSelecionado.bonus || 0)) {
+        alert("Bônus insuficiente");
+        return;
+      }
+    }
+
+    const novoPagamento: Pagamento = {
+      forma: formaPagamentoAtual,
+      valor,
+      ...(formaPagamentoAtual === "cartao_credito" && {
+        parcelas: parcelasAtuais,
+      }),
+      ...(formaPagamentoAtual === "bonus" && { bonus: valor }),
+    };
+
+    setPagamentos((prev) => [...prev, novoPagamento]);
+    setFormaPagamentoAtual("");
+    setValorPagamentoAtual("");
+    setParcelasAtuais(1);
+  };
+
+  const handleRemoverPagamento = (index: number) => {
+    setPagamentos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAdicionarBonus = () => {
+    if (!clienteSelecionado) {
+      alert("Selecione um cliente para adicionar bônus");
+      return;
+    }
+
+    const valor = parseFloat(novoBonus);
+    if (isNaN(valor) || valor <= 0) {
+      alert("Informe um valor válido");
+      return;
+    }
+
+    const clienteAtualizado = {
+      ...clienteSelecionado,
+      bonus: (clienteSelecionado.bonus || 0) + valor,
+    };
+    setClienteSelecionado(clienteAtualizado);
+    setNovoBonus("");
+  };
+
+  const handleEditarOperacao = (operacao: OperacaoCaixa) => {
+    setOperacaoEditando(operacao);
+    setTipoOperacao(operacao.tipo);
+    setClienteSelecionado(operacao.cliente || null);
+    setFornecedor(operacao.fornecedor || "");
+    setItensOperacao(operacao.itens);
+    setPagamentos(operacao.pagamentos);
+    setShowModalOperacao(true);
+  };
+
+  const handleFinalizarOperacao = () => {
+    if (!caixaSelecionado) return;
+
+    if (itensOperacao.length === 0) {
+      alert("Adicione pelo menos um item à operação");
+      return;
+    }
+
+    if (pagamentos.length === 0) {
       alert("Adicione pelo menos uma forma de pagamento");
       return;
     }
 
-    const valorTotalPago = historicoPagamentos.reduce(
-      (acc, pagamento) => acc + pagamento.valor,
-      0
-    );
+    const total = itensOperacao.reduce((acc, item) => acc + item.subtotal, 0);
+    const totalPago = pagamentos.reduce((acc, pag) => acc + pag.valor, 0);
 
-    if (valorTotalPago < venda.total) {
+    if (totalPago < total) {
       alert("Valor total pago insuficiente");
       return;
     }
 
-    setVenda((prev) => ({ ...prev, status: "finalizada" }));
-    // TODO: Implementar lógica de finalização da venda
-    console.log("Venda finalizada:", venda);
+    const novaOperacao: OperacaoCaixa = {
+      id: operacaoEditando?.id || Date.now().toString(),
+      tipo: tipoOperacao,
+      data: operacaoEditando?.data || new Date().toLocaleString("pt-BR"),
+      cliente:
+        tipoOperacao === "venda" ? clienteSelecionado || undefined : undefined,
+      fornecedor: tipoOperacao === "compra" ? fornecedor : undefined,
+      itens: itensOperacao,
+      pagamentos,
+      total,
+    };
+
+    const caixasAtualizados = caixas.map((c) =>
+      c.id === caixaSelecionado.id
+        ? {
+            ...c,
+            operacoes: operacaoEditando
+              ? c.operacoes.map((op) =>
+                  op.id === operacaoEditando.id ? novaOperacao : op
+                )
+              : [...c.operacoes, novaOperacao],
+            saldo: operacaoEditando
+              ? c.saldo - (operacaoEditando.total - total)
+              : tipoOperacao === "venda"
+              ? c.saldo + total
+              : c.saldo - total,
+          }
+        : c
+    );
+    setCaixas(caixasAtualizados);
+    setCaixaSelecionado(
+      caixasAtualizados.find((c) => c.id === caixaSelecionado.id) || null
+    );
+
+    setShowModalOperacao(false);
+    setOperacaoEditando(null);
+    setClienteSelecionado(null);
+    setItensOperacao([]);
+    setPagamentos([]);
+    setFormaPagamentoAtual("");
+    setValorPagamentoAtual("");
+    setParcelasAtuais(1);
+    setBonusUtilizado(0);
+    setNovoBonus("");
+    setFornecedor("");
   };
 
-  const handleCancelar = () => {
-    if (confirm("Tem certeza que deseja cancelar a venda?")) {
-      setVenda((prev) => ({ ...prev, status: "cancelada" }));
-      // TODO: Implementar lógica de cancelamento da venda
-      console.log("Venda cancelada:", venda);
-    }
-  };
-
-  const handleSuspender = () => {
-    if (confirm("Tem certeza que deseja suspender a venda?")) {
-      setVenda((prev) => ({ ...prev, status: "suspensa" }));
-      // TODO: Implementar lógica de suspensão da venda
-      console.log("Venda suspensa:", venda);
-    }
-  };
-
-  const handleImprimir = () => {
-    // TODO: Implementar lógica de impressão
-    console.log("Imprimir venda:", venda);
-  };
-
-  const handleEnviarEmail = () => {
-    if (!venda.cliente?.email) {
-      alert("Cliente não possui email cadastrado");
-      return;
-    }
-    // TODO: Implementar lógica de envio por email
-    console.log("Enviar por email:", venda);
-  };
-
-  const handleEnviarWhatsApp = () => {
-    if (!venda.cliente?.telefone) {
-      alert("Cliente não possui telefone cadastrado");
-      return;
-    }
-    // TODO: Implementar lógica de envio por WhatsApp
-    console.log("Enviar por WhatsApp:", venda);
+  const handleNovaOperacao = () => {
+    setOperacaoEditando(null);
+    setTipoOperacao("venda");
+    setClienteSelecionado(null);
+    setFornecedor("");
+    setItensOperacao([]);
+    setPagamentos([]);
+    setFormaPagamentoAtual("");
+    setValorPagamentoAtual("");
+    setParcelasAtuais(1);
+    setBonusUtilizado(0);
+    setNovoBonus("");
+    setShowModalOperacao(true);
   };
 
   return (
     <div className="container mx-auto p-4">
-      <SaleHeader
-        numero={venda.numero}
-        dataHora={dataHora}
-        vendedor={venda.vendedor}
-        vendedores={mockVendedores}
-        caixa={venda.caixa}
-        caixas={mockCaixas}
-        statusVenda={mockStatusVenda}
-        onVendedorChange={handleVendedorChange}
-        onCaixaChange={handleCaixaChange}
-        onAbrirFecharCaixa={handleAbrirFecharCaixa}
-        onSangriaSuprimento={handleSangriaSuprimento}
-      />
+      <h1 className="text-2xl font-bold mb-4">Caixas</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div>
-          <ClientSelect
-            cliente={venda.cliente}
-            clientes={mockClientes}
-            onSelect={handleClienteSelect}
-          />
-          <ProductSearch onSelect={handleAddItem} />
-          <ProductArea itens={venda.itens} onRemoveItem={handleRemoveItem} />
+      {!caixaSelecionado ? (
+        // Lista de Caixas
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {caixas.map((caixa) => (
+            <div
+              key={caixa.id}
+              className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg"
+              onClick={() => handleSelecionarCaixa(caixa)}
+            >
+              <h3 className="font-semibold">
+                Caixa {caixa.numero} - {caixa.descricao}
+              </h3>
+              <p className="text-sm text-gray-600">
+                Status: {caixa.status === "aberto" ? "Aberto" : "Fechado"}
+              </p>
+              <p className="text-sm text-gray-600">
+                Saldo: R$ {caixa.saldo.toFixed(2)}
+              </p>
+              {caixa.status === "aberto" && caixa.dataAbertura && (
+                <p className="text-sm text-gray-600">
+                  Aberto em: {caixa.dataAbertura}
+                </p>
+              )}
+              {caixa.status === "fechado" && caixa.dataFechamento && (
+                <p className="text-sm text-gray-600">
+                  Fechado em: {caixa.dataFechamento}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
-
+      ) : (
+        // Detalhes do Caixa Selecionado
         <div>
-          <SaleSummary
-            subtotal={venda.subtotal}
-            desconto={venda.desconto}
-            total={venda.total}
-            troco={venda.troco}
-            onDescontoChange={handleDescontoChange}
-          />
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">
+              Caixa {caixaSelecionado.numero} - {caixaSelecionado.descricao}
+            </h2>
+            <div className="flex gap-2">
+              {caixaSelecionado.status === "aberto" ? (
+                <>
+                  <button
+                    onClick={handleNovaOperacao}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Nova Operação
+                  </button>
+                  <button
+                    onClick={() => handleFecharCaixa(caixaSelecionado)}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
+                  >
+                    Fechar Caixa
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => handleAbrirCaixa(caixaSelecionado)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                >
+                  Abrir Caixa
+                </button>
+              )}
+              <button
+                onClick={() => setCaixaSelecionado(null)}
+                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+              >
+                Voltar
+              </button>
+            </div>
+          </div>
 
-          <PaymentForm
-            formaPagamento={venda.formaPagamento}
-            valorPagamento={venda.valorPagamento}
-            troco={venda.troco}
-            historicoPagamentos={historicoPagamentos}
-            onFormaPagamentoChange={handleFormaPagamentoChange}
-            onValorPagamentoChange={handleValorPagamentoChange}
-            onAdicionarPagamento={handleAdicionarPagamento}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Resumo do Caixa */}
+            <div className="bg-white rounded-lg shadow p-4">
+              <h2 className="text-lg font-semibold mb-4">Resumo do Caixa</h2>
+              <div className="space-y-2">
+                <p>
+                  Status:{" "}
+                  {caixaSelecionado.status === "aberto" ? "Aberto" : "Fechado"}
+                </p>
+                <p>Saldo Atual: R$ {caixaSelecionado.saldo.toFixed(2)}</p>
+                {caixaSelecionado.status === "aberto" &&
+                  caixaSelecionado.dataAbertura && (
+                    <p>Aberto em: {caixaSelecionado.dataAbertura}</p>
+                  )}
+                {caixaSelecionado.status === "fechado" &&
+                  caixaSelecionado.dataFechamento && (
+                    <p>Fechado em: {caixaSelecionado.dataFechamento}</p>
+                  )}
+                <p>Data/Hora: {dataHora}</p>
+              </div>
+            </div>
 
-          <SaleActions
-            venda={venda}
-            onFinalizar={handleFinalizar}
-            onCancelar={handleCancelar}
-            onSuspender={handleSuspender}
-            onImprimir={handleImprimir}
-            onEnviarEmail={handleEnviarEmail}
-            onEnviarWhatsApp={handleEnviarWhatsApp}
-          />
+            {/* Operações do Dia */}
+            <div className="md:col-span-2 bg-white rounded-lg shadow p-4">
+              <h2 className="text-lg font-semibold mb-4">Operações do Dia</h2>
+              <div className="space-y-2">
+                {caixaSelecionado.operacoes.map((op) => (
+                  <div
+                    key={op.id}
+                    className={`p-2 rounded ${
+                      op.tipo === "venda" ? "bg-green-50" : "bg-blue-50"
+                    }`}
+                  >
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="font-medium">
+                          {op.tipo === "venda" ? "Venda" : "Compra"}
+                        </p>
+                        {op.cliente && (
+                          <p className="text-sm text-gray-600">
+                            Cliente: {op.cliente.nome}
+                          </p>
+                        )}
+                        {op.fornecedor && (
+                          <p className="text-sm text-gray-600">
+                            Fornecedor: {op.fornecedor}
+                          </p>
+                        )}
+                        <div className="text-sm text-gray-600">
+                          {op.pagamentos.map((pag, index) => (
+                            <p key={index}>
+                              {
+                                formasPagamento.find(
+                                  (f) => f.value === pag.forma
+                                )?.label
+                              }
+                              {pag.parcelas && ` (${pag.parcelas}x)`}
+                              {pag.bonus && " (Bônus)"}: R${" "}
+                              {pag.valor.toFixed(2)}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={`font-medium ${
+                            op.tipo === "venda"
+                              ? "text-green-600"
+                              : "text-blue-600"
+                          }`}
+                        >
+                          {op.tipo === "venda" ? "+" : "-"} R${" "}
+                          {op.total.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-600">{op.data}</p>
+                        {caixaSelecionado.status === "aberto" && (
+                          <button
+                            onClick={() => handleEditarOperacao(op)}
+                            className="text-blue-600 hover:text-blue-800 text-sm"
+                          >
+                            Editar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Modal Operação */}
+      {showModalOperacao && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
+            <h2 className="text-xl font-bold mb-4">
+              {operacaoEditando ? "Editar Operação" : "Nova Operação"}
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Tipo de Operação
+                </label>
+                <select
+                  value={tipoOperacao}
+                  onChange={(e) =>
+                    setTipoOperacao(e.target.value as "compra" | "venda")
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="venda">Venda</option>
+                  <option value="compra">Compra</option>
+                </select>
+              </div>
+
+              {tipoOperacao === "venda" ? (
+                <ClientSelect
+                  cliente={clienteSelecionado}
+                  clientes={mockClientes}
+                  onSelect={setClienteSelecionado}
+                />
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Fornecedor
+                  </label>
+                  <input
+                    type="text"
+                    value={fornecedor}
+                    onChange={(e) => setFornecedor(e.target.value)}
+                    placeholder="Nome do fornecedor"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+
+              {tipoOperacao === "venda" && clienteSelecionado && (
+                <div className="bg-gray-50 p-4 rounded">
+                  <p className="font-medium">
+                    Bônus disponível: R${" "}
+                    {clienteSelecionado.bonus?.toFixed(2) || "0,00"}
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="number"
+                      value={novoBonus}
+                      onChange={(e) => setNovoBonus(e.target.value)}
+                      placeholder="Valor do bônus"
+                      className="flex-1 p-2 border rounded"
+                    />
+                    <button
+                      onClick={handleAdicionarBonus}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Adicionar Bônus
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <ProductSearch onSelect={handleAddItem} />
+              <ProductArea
+                itens={itensOperacao}
+                onRemoveItem={handleRemoveItem}
+              />
+
+              {/* Formas de Pagamento */}
+              <div className="space-y-4">
+                <h3 className="font-medium">Formas de Pagamento</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Forma de Pagamento
+                    </label>
+                    <select
+                      value={formaPagamentoAtual}
+                      onChange={(e) => setFormaPagamentoAtual(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">Selecione...</option>
+                      {formasPagamento.map((forma) => (
+                        <option key={forma.value} value={forma.value}>
+                          {forma.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Valor
+                    </label>
+                    <input
+                      type="number"
+                      value={valorPagamentoAtual}
+                      onChange={(e) => setValorPagamentoAtual(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {formaPagamentoAtual === "cartao_credito" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Parcelas
+                      </label>
+                      <select
+                        value={parcelasAtuais}
+                        onChange={(e) =>
+                          setParcelasAtuais(Number(e.target.value))
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                          <option key={num} value={num}>
+                            {num}x
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleAdicionarPagamento}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Adicionar Pagamento
+                </button>
+
+                {/* Lista de Pagamentos */}
+                {pagamentos.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-2">Pagamentos Adicionados</h4>
+                    <div className="space-y-2">
+                      {pagamentos.map((pag, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center bg-gray-50 p-2 rounded"
+                        >
+                          <div>
+                            <p className="font-medium">
+                              {
+                                formasPagamento.find(
+                                  (f) => f.value === pag.forma
+                                )?.label
+                              }
+                              {pag.parcelas && ` (${pag.parcelas}x)`}
+                              {pag.bonus && " (Bônus)"}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              R$ {pag.valor.toFixed(2)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleRemoverPagamento(index)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowModalOperacao(false);
+                    setOperacaoEditando(null);
+                  }}
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleFinalizarOperacao}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  {operacaoEditando
+                    ? "Salvar Alterações"
+                    : "Finalizar Operação"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

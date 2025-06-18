@@ -362,17 +362,17 @@ export default function CaixaPage() {
             onFilterChange={setCaixasFiltrados}
           />
 
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {caixasFiltrados.map((caixa) => (
               <div
                 key={caixa.id}
-                className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg"
+                className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => handleSelecionarCaixa(caixa)}
               >
-                <h3 className="font-semibold">
+                <h3 className="font-semibold text-lg">
                   Caixa {caixa.numero} - {caixa.descricao}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 mt-2">
                   Status: {caixa.status === "aberto" ? "Aberto" : "Fechado"}
                 </p>
                 <p className="text-sm text-gray-600">
@@ -395,22 +395,22 @@ export default function CaixaPage() {
       ) : (
         // Detalhes do Caixa Selecionado
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h2 className="text-xl font-bold text-gray-900">
               Caixa {caixaSelecionado.numero} - {caixaSelecionado.descricao}
             </h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               {caixaSelecionado.status === "aberto" ? (
                 <>
                   <button
                     onClick={handleNovaOperacao}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
                   >
                     Nova Operação
                   </button>
                   <button
                     onClick={() => handleFecharCaixa(caixaSelecionado)}
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 text-sm font-medium"
                   >
                     Fechar Caixa
                   </button>
@@ -418,149 +418,193 @@ export default function CaixaPage() {
               ) : (
                 <button
                   onClick={() => handleAbrirCaixa(caixaSelecionado)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  className="flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium"
                 >
                   Abrir Caixa
                 </button>
               )}
               <button
                 onClick={() => setCaixaSelecionado(null)}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                className="flex-1 sm:flex-none px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium"
               >
                 Voltar
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Resumo do Caixa */}
-            <div className="bg-white rounded-lg shadow p-4">
+            <div className="bg-white rounded-lg shadow p-4 lg:p-6">
               <h2 className="text-lg font-semibold mb-4">Resumo do Caixa</h2>
-              <div className="space-y-2">
-                <p>
-                  Status:{" "}
-                  {caixaSelecionado.status === "aberto" ? "Aberto" : "Fechado"}
-                </p>
-                <p>Saldo Atual: R$ {caixaSelecionado.saldo.toFixed(2)}</p>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Status:</span>
+                  <span
+                    className={`px-2 py-1 rounded text-sm font-medium ${
+                      caixaSelecionado.status === "aberto"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {caixaSelecionado.status === "aberto"
+                      ? "Aberto"
+                      : "Fechado"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Saldo Atual:</span>
+                  <span className="font-semibold text-lg">
+                    R$ {caixaSelecionado.saldo.toFixed(2)}
+                  </span>
+                </div>
                 {caixaSelecionado.status === "aberto" &&
                   caixaSelecionado.dataAbertura && (
-                    <p>Aberto em: {caixaSelecionado.dataAbertura}</p>
+                    <div className="text-sm text-gray-600">
+                      <p>Aberto em: {caixaSelecionado.dataAbertura}</p>
+                    </div>
                   )}
                 {caixaSelecionado.status === "fechado" &&
                   caixaSelecionado.dataFechamento && (
-                    <p>Fechado em: {caixaSelecionado.dataFechamento}</p>
+                    <div className="text-sm text-gray-600">
+                      <p>Fechado em: {caixaSelecionado.dataFechamento}</p>
+                    </div>
                   )}
-                <p>Data/Hora: {dataHora}</p>
+                <div className="text-sm text-gray-600">
+                  <p>Data/Hora: {dataHora}</p>
+                </div>
               </div>
             </div>
 
             {/* Operações do Dia */}
-            <div className="md:col-span-2 bg-white rounded-lg shadow p-4">
+            <div className="lg:col-span-2 bg-white rounded-lg shadow p-4 lg:p-6">
               <h2 className="text-lg font-semibold mb-4">Operações do Dia</h2>
-              <div className="space-y-2">
-                {caixaSelecionado.operacoes.map((op) => (
-                  <div
-                    key={op.id}
-                    className={`p-2 rounded ${
-                      op.tipo === "venda" ? "bg-green-50" : "bg-blue-50"
-                    }`}
-                  >
-                    <div className="flex justify-between">
-                      <div>
-                        <p className="font-medium">
-                          {op.tipo === "venda" ? "Venda" : "Compra"}
-                        </p>
-                        {op.cliente && (
-                          <p className="text-sm text-gray-600">
-                            Cliente: {op.cliente.nome}
-                          </p>
-                        )}
-                        {op.fornecedor && (
-                          <p className="text-sm text-gray-600">
-                            Fornecedor: {op.fornecedor.nome}
-                          </p>
-                        )}
-                        <div className="text-sm text-gray-600">
-                          {op.pagamentos.map((pag, index) => (
-                            <p key={index}>
-                              {
-                                formasPagamento.find(
-                                  (f) => f.value === pag.forma
-                                )?.label
-                              }
-                              {pag.parcelas && ` (${pag.parcelas}x)`}
-                              {pag.bonus && " (Bônus)"}: R${" "}
-                              {pag.valor.toFixed(2)}
+              <div className="space-y-3">
+                {caixaSelecionado.operacoes.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Nenhuma operação registrada hoje.</p>
+                  </div>
+                ) : (
+                  caixaSelecionado.operacoes.map((op) => (
+                    <div
+                      key={op.id}
+                      className={`p-4 rounded-lg border ${
+                        op.tipo === "venda"
+                          ? "border-green-200 bg-green-50"
+                          : "border-blue-200 bg-blue-50"
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${
+                                op.tipo === "venda"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {op.tipo === "venda" ? "Venda" : "Compra"}
+                            </span>
+                            <span className="text-sm text-gray-600">
+                              {op.data}
+                            </span>
+                          </div>
+
+                          {op.cliente && (
+                            <p className="text-sm text-gray-700 mb-1">
+                              <span className="font-medium">Cliente:</span>{" "}
+                              {op.cliente.nome}
                             </p>
-                          ))}
+                          )}
+                          {op.fornecedor && (
+                            <p className="text-sm text-gray-700 mb-1">
+                              <span className="font-medium">Fornecedor:</span>{" "}
+                              {op.fornecedor.nome}
+                            </p>
+                          )}
+
+                          <div className="text-sm text-gray-600 space-y-1">
+                            {op.pagamentos.map((pag, index) => (
+                              <p key={index}>
+                                {
+                                  formasPagamento.find(
+                                    (f) => f.value === pag.forma
+                                  )?.label
+                                }
+                                {pag.parcelas && ` (${pag.parcelas}x)`}
+                                {pag.bonus && " (Bônus)"}: R${" "}
+                                {pag.valor.toFixed(2)}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                          <p
+                            className={`font-semibold text-lg ${
+                              op.tipo === "venda"
+                                ? "text-green-600"
+                                : "text-blue-600"
+                            }`}
+                          >
+                            {op.tipo === "venda" ? "+" : "-"} R${" "}
+                            {op.total.toFixed(2)}
+                          </p>
+
+                          {caixaSelecionado.status === "aberto" && (
+                            <div className="flex flex-wrap gap-1">
+                              <button
+                                onClick={() => handleEditarOperacao(op)}
+                                className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const email =
+                                    op.cliente?.email || op.fornecedor?.email;
+                                  if (email) {
+                                    window.location.href = `mailto:${email}?subject=Detalhes da ${
+                                      op.tipo === "venda" ? "Venda" : "Compra"
+                                    }&body=Detalhes da operação:%0D%0A%0D%0A${op.itens
+                                      .map(
+                                        (item) =>
+                                          `- ${item.produto}: ${
+                                            item.quantidade
+                                          }x R$ ${item.subtotal.toFixed(2)}`
+                                      )
+                                      .join(
+                                        "%0D%0A"
+                                      )}%0D%0A%0D%0ATotal: R$ ${op.total.toFixed(
+                                      2
+                                    )}`;
+                                  } else {
+                                    alert(
+                                      "Email não disponível para esta operação"
+                                    );
+                                  }
+                                }}
+                                className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                              >
+                                Email
+                              </button>
+                              <button
+                                onClick={() => {
+                                  alert(
+                                    "Funcionalidade de emissão de nota fiscal será implementada em breve"
+                                  );
+                                }}
+                                className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+                              >
+                                NF
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-medium ${
-                            op.tipo === "venda"
-                              ? "text-green-600"
-                              : "text-blue-600"
-                          }`}
-                        >
-                          {op.tipo === "venda" ? "+" : "-"} R${" "}
-                          {op.total.toFixed(2)}
-                        </p>
-                        <p className="text-sm text-gray-600">{op.data}</p>
-                        {caixaSelecionado.status === "aberto" && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditarOperacao(op)}
-                              className="text-blue-600 hover:text-blue-800 text-sm"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              onClick={() => {
-                                const email =
-                                  op.cliente?.email || op.fornecedor?.email;
-                                if (email) {
-                                  window.location.href = `mailto:${email}?subject=Detalhes da ${
-                                    op.tipo === "venda" ? "Venda" : "Compra"
-                                  }&body=Detalhes da operação:%0D%0A%0D%0A${op.itens
-                                    .map(
-                                      (item) =>
-                                        `- ${item.produto}: ${
-                                          item.quantidade
-                                        }x R$ ${item.subtotal.toFixed(2)}`
-                                    )
-                                    .join(
-                                      "%0D%0A"
-                                    )}%0D%0A%0D%0ATotal: R$ ${op.total.toFixed(
-                                    2
-                                  )}`;
-                                } else {
-                                  alert(
-                                    "Email não disponível para esta operação"
-                                  );
-                                }
-                              }}
-                              className="text-green-600 hover:text-green-800 text-sm"
-                            >
-                              Email
-                            </button>
-                            <button
-                              onClick={() => {
-                                // Aqui você pode implementar a lógica para gerar a nota fiscal
-                                alert(
-                                  "Funcionalidade de emissão de nota fiscal será implementada em breve"
-                                );
-                              }}
-                              className="text-purple-600 hover:text-purple-800 text-sm"
-                            >
-                              NF
-                            </button>
-                          </div>
-                        )}
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -569,191 +613,221 @@ export default function CaixaPage() {
 
       {/* Modal Operação */}
       {showModalOperacao && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
-            <h2 className="text-xl font-bold mb-4">
-              {operacaoEditando ? "Editar Operação" : "Nova Operação"}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Tipo de Operação
-                </label>
-                <select
-                  value={tipoOperacao}
-                  onChange={(e) =>
-                    setTipoOperacao(e.target.value as "compra" | "venda")
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="venda">Venda</option>
-                  <option value="compra">Compra</option>
-                </select>
-              </div>
-
-              {tipoOperacao === "venda" ? (
-                <ClientSelect
-                  cliente={clienteSelecionado}
-                  clientes={mockClientes}
-                  onSelect={setClienteSelecionado}
-                />
-              ) : (
-                <FornecedorSelect
-                  fornecedor={fornecedorSelecionado}
-                  fornecedores={mockFornecedores}
-                  onSelect={setFornecedorSelecionado}
-                />
-              )}
-
-              {tipoOperacao === "venda" && clienteSelecionado && (
-                <div className="bg-gray-50 p-4 rounded">
-                  <p className="font-medium">
-                    Bônus disponível: R${" "}
-                    {clienteSelecionado.bonus?.toFixed(2) || "0,00"}
-                  </p>
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      type="number"
-                      value={novoBonus}
-                      onChange={(e) => setNovoBonus(e.target.value)}
-                      placeholder="Valor do bônus"
-                      className="flex-1 p-2 border rounded"
-                    />
-                    <button
-                      onClick={handleAdicionarBonus}
-                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    >
-                      Adicionar Bônus
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <ProductSearch onSelect={handleAddItem} />
-              <ProductArea
-                itens={itensOperacao}
-                onRemoveItem={handleRemoveItem}
-              />
-
-              {/* Formas de Pagamento */}
-              <div className="space-y-4">
-                <h3 className="font-medium">Formas de Pagamento</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Forma de Pagamento
-                    </label>
-                    <select
-                      value={formaPagamentoAtual}
-                      onChange={(e) => setFormaPagamentoAtual(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    >
-                      <option value="">Selecione...</option>
-                      {formasPagamento.map((forma) => (
-                        <option key={forma.value} value={forma.value}>
-                          {forma.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Valor
-                    </label>
-                    <input
-                      type="number"
-                      value={valorPagamentoAtual}
-                      onChange={(e) => setValorPagamentoAtual(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  {formaPagamentoAtual === "cartao_credito" && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Parcelas
-                      </label>
-                      <select
-                        value={parcelasAtuais}
-                        onChange={(e) =>
-                          setParcelasAtuais(Number(e.target.value))
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
-                          <option key={num} value={num}>
-                            {num}x
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={handleAdicionarPagamento}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Adicionar Pagamento
-                </button>
-
-                {/* Lista de Pagamentos */}
-                {pagamentos.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="font-medium mb-2">Pagamentos Adicionados</h4>
-                    <div className="space-y-2">
-                      {pagamentos.map((pag, index) => (
-                        <div
-                          key={index}
-                          className="flex justify-between items-center bg-gray-50 p-2 rounded"
-                        >
-                          <div>
-                            <p className="font-medium">
-                              {
-                                formasPagamento.find(
-                                  (f) => f.value === pag.forma
-                                )?.label
-                              }
-                              {pag.parcelas && ` (${pag.parcelas}x)`}
-                              {pag.bonus && " (Bônus)"}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              R$ {pag.valor.toFixed(2)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleRemoverPagamento(index)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 lg:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">
+                  {operacaoEditando ? "Editar Operação" : "Nova Operação"}
+                </h2>
                 <button
                   onClick={() => {
                     setShowModalOperacao(false);
                     setOperacaoEditando(null);
                   }}
-                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  className="text-gray-500 hover:text-gray-700"
                 >
-                  Cancelar
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
                 </button>
-                <button
-                  onClick={handleFinalizarOperacao}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  {operacaoEditando
-                    ? "Salvar Alterações"
-                    : "Finalizar Operação"}
-                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Operação
+                  </label>
+                  <select
+                    value={tipoOperacao}
+                    onChange={(e) =>
+                      setTipoOperacao(e.target.value as "compra" | "venda")
+                    }
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="venda">Venda</option>
+                    <option value="compra">Compra</option>
+                  </select>
+                </div>
+
+                {tipoOperacao === "venda" ? (
+                  <ClientSelect
+                    cliente={clienteSelecionado}
+                    clientes={mockClientes}
+                    onSelect={setClienteSelecionado}
+                  />
+                ) : (
+                  <FornecedorSelect
+                    fornecedor={fornecedorSelecionado}
+                    fornecedores={mockFornecedores}
+                    onSelect={setFornecedorSelecionado}
+                  />
+                )}
+
+                {tipoOperacao === "venda" && clienteSelecionado && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="font-medium mb-3">
+                      Bônus disponível: R${" "}
+                      {clienteSelecionado.bonus?.toFixed(2) || "0,00"}
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="number"
+                        value={novoBonus}
+                        onChange={(e) => setNovoBonus(e.target.value)}
+                        placeholder="Valor do bônus"
+                        className="flex-1 p-2 border rounded-lg focus:border-blue-500 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={handleAdicionarBonus}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                      >
+                        Adicionar Bônus
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <ProductSearch onSelect={handleAddItem} />
+                <ProductArea
+                  itens={itensOperacao}
+                  onRemoveItem={handleRemoveItem}
+                />
+
+                {/* Formas de Pagamento */}
+                <div className="space-y-4">
+                  <h3 className="font-medium text-lg">Formas de Pagamento</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Forma de Pagamento
+                      </label>
+                      <select
+                        value={formaPagamentoAtual}
+                        onChange={(e) => setFormaPagamentoAtual(e.target.value)}
+                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      >
+                        <option value="">Selecione...</option>
+                        {formasPagamento.map((forma) => (
+                          <option key={forma.value} value={forma.value}>
+                            {forma.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Valor
+                      </label>
+                      <input
+                        type="number"
+                        value={valorPagamentoAtual}
+                        onChange={(e) => setValorPagamentoAtual(e.target.value)}
+                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {formaPagamentoAtual === "cartao_credito" && (
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Parcelas
+                        </label>
+                        <select
+                          value={parcelasAtuais}
+                          onChange={(e) =>
+                            setParcelasAtuais(Number(e.target.value))
+                          }
+                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
+                            (num) => (
+                              <option key={num} value={num}>
+                                {num}x
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleAdicionarPagamento}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    Adicionar Pagamento
+                  </button>
+
+                  {/* Lista de Pagamentos */}
+                  {pagamentos.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-3">
+                        Pagamentos Adicionados
+                      </h4>
+                      <div className="space-y-2">
+                        {pagamentos.map((pag, index) => (
+                          <div
+                            key={index}
+                            className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-gray-50 p-3 rounded-lg gap-2"
+                          >
+                            <div>
+                              <p className="font-medium">
+                                {
+                                  formasPagamento.find(
+                                    (f) => f.value === pag.forma
+                                  )?.label
+                                }
+                                {pag.parcelas && ` (${pag.parcelas}x)`}
+                                {pag.bonus && " (Bônus)"}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                R$ {pag.valor.toFixed(2)}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleRemoverPagamento(index)}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
+                  <button
+                    onClick={() => {
+                      setShowModalOperacao(false);
+                      setOperacaoEditando(null);
+                    }}
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 font-medium"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleFinalizarOperacao}
+                    className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    {operacaoEditando
+                      ? "Salvar Alterações"
+                      : "Finalizar Operação"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

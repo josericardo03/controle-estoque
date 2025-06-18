@@ -157,7 +157,7 @@ export default function PessoasPage() {
                     : "bg-purple-100 text-purple-800"
                 }`}
               >
-                {pessoa.tipo === "pf" ? "Pessoa Física" : "Pessoa Jurídica"}
+                {pessoa.tipo === "pf" ? "PF" : "PJ"}
               </span>
             </div>
             <span className="text-sm text-gray-500">{pessoa.email}</span>
@@ -166,15 +166,29 @@ export default function PessoasPage() {
       },
     },
     {
-      id: "contato",
-      accessorKey: "contato",
-      header: "Contato",
+      id: "documento",
+      accessorKey: "documento",
+      header: "CPF/CNPJ",
       cell: ({ row }: { row: Row<Pessoa> }) => {
         const pessoa = row.original;
         return (
-          <div className="hidden md:flex flex-col text-sm">
-            <span className="text-gray-900">{pessoa.documento}</span>
-            <span className="text-gray-500">{pessoa.telefone}</span>
+          <div className="hidden md:block">
+            <span className="text-sm text-gray-900 font-mono">
+              {pessoa.documento}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      id: "telefone",
+      accessorKey: "telefone",
+      header: "Telefone",
+      cell: ({ row }: { row: Row<Pessoa> }) => {
+        const pessoa = row.original;
+        return (
+          <div className="hidden md:block">
+            <span className="text-sm text-gray-900">{pessoa.telefone}</span>
           </div>
         );
       },
@@ -318,7 +332,7 @@ export default function PessoasPage() {
           <div className="md:hidden space-y-4">
             {pessoasMock.map((pessoa) => (
               <div key={pessoa.id} className="bg-white rounded-lg shadow p-4">
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-medium text-gray-900">
@@ -333,18 +347,31 @@ export default function PessoasPage() {
                           : "bg-purple-100 text-purple-800"
                       }`}
                     >
-                      {pessoa.tipo === "pf"
-                        ? "Pessoa Física"
-                        : "Pessoa Jurídica"}
+                      {pessoa.tipo === "pf" ? "PF" : "PJ"}
                     </span>
                   </div>
 
-                  <div className="text-sm">
-                    <p className="text-gray-900">{pessoa.documento}</p>
-                    <p className="text-gray-500">{pessoa.telefone}</p>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                        {pessoa.tipo === "pf" ? "CPF" : "CNPJ"}
+                      </p>
+                      <p className="text-gray-900 font-mono">
+                        {pessoa.documento}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                        Telefone
+                      </p>
+                      <p className="text-gray-900">{pessoa.telefone}</p>
+                    </div>
                   </div>
 
                   <div className="text-sm">
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
+                      Endereço
+                    </p>
                     <p className="text-gray-900">
                       {pessoa.endereco.logradouro}, {pessoa.endereco.numero}
                     </p>

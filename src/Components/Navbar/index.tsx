@@ -36,7 +36,7 @@ export default function Navbar() {
     { href: "/", label: "Início", icon: FiHome },
     { href: "/usuarios", label: "Usuários", icon: FiUsers },
     { href: "/produtos", label: "Produtos", icon: FiBox },
-    { href: "/negociacoes", label: "Negociações", icon: FiDollarSign },
+    { href: "/entregas", label: "Entregas", icon: FiDollarSign },
     { href: "/configuracoes", label: "Configurações", icon: FiSettings },
   ];
 

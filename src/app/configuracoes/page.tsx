@@ -47,6 +47,20 @@ const unidadesMock: ConfigItem[] = [
   { id: "2", nome: "Par", quantidadeProdutos: 150 },
 ];
 
+const bairrosMock: ConfigItem[] = [
+  { id: "1", nome: "Centro", quantidadeProdutos: 120 },
+  { id: "2", nome: "Jardim América", quantidadeProdutos: 85 },
+  { id: "3", nome: "Vila Nova", quantidadeProdutos: 95 },
+  { id: "4", nome: "Boa Vista", quantidadeProdutos: 110 },
+];
+
+const cidadesMock: ConfigItem[] = [
+  { id: "1", nome: "São Paulo", quantidadeProdutos: 450 },
+  { id: "2", nome: "Rio de Janeiro", quantidadeProdutos: 320 },
+  { id: "3", nome: "Belo Horizonte", quantidadeProdutos: 280 },
+  { id: "4", nome: "Salvador", quantidadeProdutos: 190 },
+];
+
 export default function ConfiguracoesPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -58,10 +72,20 @@ export default function ConfiguracoesPage() {
     { name: "Categorias", data: categoriasMock, hasDescription: true },
     { name: "Cores", data: coresMock, hasDescription: false },
     { name: "Unidades", data: unidadesMock, hasDescription: false },
+    { name: "Bairros", data: bairrosMock, hasDescription: false },
+    { name: "Cidades", data: cidadesMock, hasDescription: false },
   ];
 
   // Colunas da tabela
   const getColumns = (hasDescription: boolean) => {
+    const getMetricHeader = () => {
+      const tabName = tabs[activeTab].name.toLowerCase();
+      if (tabName === "bairros" || tabName === "cidades") {
+        return "Pessoas Vinculadas";
+      }
+      return "Produtos Vinculados";
+    };
+
     const baseColumns = [
       {
         accessorKey: "nome",
@@ -72,7 +96,7 @@ export default function ConfiguracoesPage() {
       },
       {
         accessorKey: "quantidadeProdutos",
-        header: () => <div className="text-center">Produtos Vinculados</div>,
+        header: () => <div className="text-center">{getMetricHeader()}</div>,
         cell: ({ row }: { row: Row }) => (
           <div className="text-center font-medium">
             {row.getValue("quantidadeProdutos")}
@@ -120,69 +144,79 @@ export default function ConfiguracoesPage() {
   };
 
   // Renderiza um card para visualização mobile
-  const renderMobileCard = (item: ConfigItem, hasDescription: boolean) => (
-    <div
-      key={item.id}
-      className="bg-white p-4 rounded-lg border border-gray-200 space-y-3"
-    >
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-medium text-gray-900">{item.nome}</h3>
-          {hasDescription && item.descricao && (
-            <p className="text-sm text-gray-500 mt-1">{item.descricao}</p>
-          )}
+  const renderMobileCard = (item: ConfigItem, hasDescription: boolean) => {
+    const getMetricText = () => {
+      const tabName = tabs[activeTab].name.toLowerCase();
+      if (tabName === "bairros" || tabName === "cidades") {
+        return "Pessoas vinculadas";
+      }
+      return "Produtos vinculados";
+    };
+
+    return (
+      <div
+        key={item.id}
+        className="bg-white p-4 rounded-lg border border-gray-200 space-y-3"
+      >
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="font-medium text-gray-900">{item.nome}</h3>
+            {hasDescription && item.descricao && (
+              <p className="text-sm text-gray-500 mt-1">{item.descricao}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleEdit(item)}
+              className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+              title="Editar"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => handleDelete(item)}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+              title="Excluir"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 6h18" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleEdit(item)}
-            className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-            title="Editar"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </button>
-          <button
-            onClick={() => handleDelete(item)}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-            title="Excluir"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 6h18" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-          </button>
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-sm text-gray-500">{getMetricText()}</span>
+          <span className="text-sm font-medium text-gray-900">
+            {item.quantidadeProdutos}
+          </span>
         </div>
       </div>
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-        <span className="text-sm text-gray-500">Produtos vinculados</span>
-        <span className="text-sm font-medium text-gray-900">
-          {item.quantidadeProdutos}
-        </span>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-8">
@@ -295,9 +329,12 @@ export default function ConfiguracoesPage() {
                 type="text"
                 {...methods.register("nome")}
                 className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                placeholder={`Digite o nome ${tabs[activeTab].name
-                  .toLowerCase()
-                  .slice(0, -1)}`}
+                placeholder={(() => {
+                  const tabName = tabs[activeTab].name.toLowerCase();
+                  if (tabName === "bairros") return "Digite o nome do bairro";
+                  if (tabName === "cidades") return "Digite o nome da cidade";
+                  return `Digite o nome ${tabName.slice(0, -1)}`;
+                })()}
               />
             </FormField>
 

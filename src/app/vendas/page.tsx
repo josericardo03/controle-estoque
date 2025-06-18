@@ -8,6 +8,8 @@ import { ProductArea } from "@/Components/ui/product-area";
 import { SaleSummary } from "@/Components/ui/sale-summary";
 import { PaymentForm } from "@/Components/ui/payment-form";
 import { ClientSelect } from "@/Components/ui/client-select";
+import { FornecedorSelect } from "@/Components/ui/fornecedor-select";
+import { CaixaSearch } from "@/Components/ui/caixa-search";
 import {
   Venda,
   Vendedor,
@@ -16,6 +18,8 @@ import {
   CaixaOption,
   Cliente,
   ClienteOption,
+  Fornecedor,
+  FornecedorOption,
   ItemVenda,
   OperacaoCaixa,
   CaixaFechado,
@@ -52,11 +56,51 @@ const mockCaixas: Caixa[] = [
     sangrias: 0,
     suprimentos: 0,
   },
+  {
+    id: "3",
+    numero: "3",
+    descricao: "Caixa Expresso",
+    saldo: 750,
+    status: "aberto",
+    dataAbertura: "01/03/2024 09:00",
+    operacoes: [],
+    sangrias: 0,
+    suprimentos: 0,
+  },
+  {
+    id: "4",
+    numero: "4",
+    descricao: "Caixa VIP",
+    saldo: 2000,
+    status: "fechado",
+    dataAbertura: "28/02/2024 10:00",
+    dataFechamento: "28/02/2024 20:00",
+    operacoes: [],
+    sangrias: 0,
+    suprimentos: 0,
+  },
+  {
+    id: "5",
+    numero: "5",
+    descricao: "Caixa Atendimento",
+    saldo: 300,
+    status: "aberto",
+    dataAbertura: "01/03/2024 07:30",
+    operacoes: [],
+    sangrias: 0,
+    suprimentos: 0,
+  },
 ];
 
 const mockClientes: ClienteOption[] = [
   { value: "1", label: "Cliente 1", bonus: 100 },
   { value: "2", label: "Cliente 2", bonus: 50 },
+];
+
+const mockFornecedores: FornecedorOption[] = [
+  { value: "1", label: "Fornecedor A" },
+  { value: "2", label: "Fornecedor B" },
+  { value: "3", label: "Fornecedor C" },
 ];
 
 const formasPagamento = [
@@ -72,10 +116,13 @@ export default function CaixaPage() {
   const [caixas, setCaixas] = useState<Caixa[]>(mockCaixas);
   const [caixaSelecionado, setCaixaSelecionado] = useState<Caixa | null>(null);
   const [showModalOperacao, setShowModalOperacao] = useState(false);
+  const [caixasFiltrados, setCaixasFiltrados] = useState<Caixa[]>(mockCaixas);
   const [dataHora, setDataHora] = useState("");
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(
     null
   );
+  const [fornecedorSelecionado, setFornecedorSelecionado] =
+    useState<Fornecedor | null>(null);
   const [itensOperacao, setItensOperacao] = useState<ItemVenda[]>([]);
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
   const [formaPagamentoAtual, setFormaPagamentoAtual] = useState("");
@@ -84,7 +131,6 @@ export default function CaixaPage() {
   const [bonusUtilizado, setBonusUtilizado] = useState(0);
   const [novoBonus, setNovoBonus] = useState("");
   const [tipoOperacao, setTipoOperacao] = useState<"compra" | "venda">("venda");
-  const [fornecedor, setFornecedor] = useState("");
   const [operacaoEditando, setOperacaoEditando] =
     useState<OperacaoCaixa | null>(null);
 
@@ -211,7 +257,7 @@ export default function CaixaPage() {
     setOperacaoEditando(operacao);
     setTipoOperacao(operacao.tipo);
     setClienteSelecionado(operacao.cliente || null);
-    setFornecedor(operacao.fornecedor || "");
+    setFornecedorSelecionado(operacao.fornecedor || null);
     setItensOperacao(operacao.itens);
     setPagamentos(operacao.pagamentos);
     setShowModalOperacao(true);
@@ -244,7 +290,10 @@ export default function CaixaPage() {
       data: operacaoEditando?.data || new Date().toLocaleString("pt-BR"),
       cliente:
         tipoOperacao === "venda" ? clienteSelecionado || undefined : undefined,
-      fornecedor: tipoOperacao === "compra" ? fornecedor : undefined,
+      fornecedor:
+        tipoOperacao === "compra"
+          ? fornecedorSelecionado || undefined
+          : undefined,
       itens: itensOperacao,
       pagamentos,
       total,
@@ -275,6 +324,7 @@ export default function CaixaPage() {
     setShowModalOperacao(false);
     setOperacaoEditando(null);
     setClienteSelecionado(null);
+    setFornecedorSelecionado(null);
     setItensOperacao([]);
     setPagamentos([]);
     setFormaPagamentoAtual("");
@@ -282,14 +332,13 @@ export default function CaixaPage() {
     setParcelasAtuais(1);
     setBonusUtilizado(0);
     setNovoBonus("");
-    setFornecedor("");
   };
 
   const handleNovaOperacao = () => {
     setOperacaoEditando(null);
     setTipoOperacao("venda");
     setClienteSelecionado(null);
-    setFornecedor("");
+    setFornecedorSelecionado(null);
     setItensOperacao([]);
     setPagamentos([]);
     setFormaPagamentoAtual("");
@@ -305,35 +354,43 @@ export default function CaixaPage() {
       <h1 className="text-2xl font-bold mb-4">Caixas</h1>
 
       {!caixaSelecionado ? (
-        // Lista de Caixas
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {caixas.map((caixa) => (
-            <div
-              key={caixa.id}
-              className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg"
-              onClick={() => handleSelecionarCaixa(caixa)}
-            >
-              <h3 className="font-semibold">
-                Caixa {caixa.numero} - {caixa.descricao}
-              </h3>
-              <p className="text-sm text-gray-600">
-                Status: {caixa.status === "aberto" ? "Aberto" : "Fechado"}
-              </p>
-              <p className="text-sm text-gray-600">
-                Saldo: R$ {caixa.saldo.toFixed(2)}
-              </p>
-              {caixa.status === "aberto" && caixa.dataAbertura && (
+        // Lista de Caixas com Busca Integrada
+        <div>
+          <CaixaSearch
+            caixas={caixas}
+            onSelect={handleSelecionarCaixa}
+            onFilterChange={setCaixasFiltrados}
+          />
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {caixasFiltrados.map((caixa) => (
+              <div
+                key={caixa.id}
+                className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg"
+                onClick={() => handleSelecionarCaixa(caixa)}
+              >
+                <h3 className="font-semibold">
+                  Caixa {caixa.numero} - {caixa.descricao}
+                </h3>
                 <p className="text-sm text-gray-600">
-                  Aberto em: {caixa.dataAbertura}
+                  Status: {caixa.status === "aberto" ? "Aberto" : "Fechado"}
                 </p>
-              )}
-              {caixa.status === "fechado" && caixa.dataFechamento && (
                 <p className="text-sm text-gray-600">
-                  Fechado em: {caixa.dataFechamento}
+                  Saldo: R$ {caixa.saldo.toFixed(2)}
                 </p>
-              )}
-            </div>
-          ))}
+                {caixa.status === "aberto" && caixa.dataAbertura && (
+                  <p className="text-sm text-gray-600">
+                    Aberto em: {caixa.dataAbertura}
+                  </p>
+                )}
+                {caixa.status === "fechado" && caixa.dataFechamento && (
+                  <p className="text-sm text-gray-600">
+                    Fechado em: {caixa.dataFechamento}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         // Detalhes do Caixa Selecionado
@@ -420,7 +477,7 @@ export default function CaixaPage() {
                         )}
                         {op.fornecedor && (
                           <p className="text-sm text-gray-600">
-                            Fornecedor: {op.fornecedor}
+                            Fornecedor: {op.fornecedor.nome}
                           </p>
                         )}
                         <div className="text-sm text-gray-600">
@@ -461,7 +518,7 @@ export default function CaixaPage() {
                             <button
                               onClick={() => {
                                 const email =
-                                  op.cliente?.email || op.fornecedor;
+                                  op.cliente?.email || op.fornecedor?.email;
                                 if (email) {
                                   window.location.href = `mailto:${email}?subject=Detalhes da ${
                                     op.tipo === "venda" ? "Venda" : "Compra"
@@ -541,18 +598,11 @@ export default function CaixaPage() {
                   onSelect={setClienteSelecionado}
                 />
               ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Fornecedor
-                  </label>
-                  <input
-                    type="text"
-                    value={fornecedor}
-                    onChange={(e) => setFornecedor(e.target.value)}
-                    placeholder="Nome do fornecedor"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
+                <FornecedorSelect
+                  fornecedor={fornecedorSelecionado}
+                  fornecedores={mockFornecedores}
+                  onSelect={setFornecedorSelecionado}
+                />
               )}
 
               {tipoOperacao === "venda" && clienteSelecionado && (

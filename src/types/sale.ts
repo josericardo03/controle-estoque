@@ -48,6 +48,19 @@ export interface ClienteOption {
   bonus?: number;
 }
 
+export interface Fornecedor {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  cnpj: string;
+}
+
+export interface FornecedorOption {
+  value: string;
+  label: string;
+}
+
 export interface Product {
   id: string;
   codigo: string;
@@ -69,7 +82,7 @@ export interface OperacaoCaixa {
   tipo: "compra" | "venda";
   data: string;
   cliente?: Cliente;
-  fornecedor?: string;
+  fornecedor?: Fornecedor;
   itens: ItemVenda[];
   pagamentos: Pagamento[];
   total: number;

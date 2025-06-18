@@ -1,27 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Cliente, ClienteOption } from "@/types/sale";
+import { Fornecedor, FornecedorOption } from "@/types/sale";
 import { SelectInput } from "@/Components/ui/select";
-import { ClientSearch } from "./client-search";
+import { FornecedorSearch } from "./fornecedor-search";
 
-interface ClientSelectProps {
-  cliente: Cliente | null;
-  clientes: ClienteOption[];
-  onSelect: (cliente: Cliente | null) => void;
+interface FornecedorSelectProps {
+  fornecedor: Fornecedor | null;
+  fornecedores: FornecedorOption[];
+  onSelect: (fornecedor: Fornecedor | null) => void;
 }
 
-export function ClientSelect({
-  cliente,
-  clientes,
+export function FornecedorSelect({
+  fornecedor,
+  fornecedores,
   onSelect,
-}: ClientSelectProps) {
+}: FornecedorSelectProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [useSearch, setUseSearch] = useState(false);
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      <h2 className="text-lg font-semibold mb-4">Cliente</h2>
+      <h2 className="text-lg font-semibold mb-4">Fornecedor</h2>
 
       <div className="space-y-4">
         <div className="flex gap-2 mb-4">
@@ -48,11 +48,13 @@ export function ClientSelect({
         {!useSearch ? (
           <div>
             <SelectInput
-              name="cliente"
-              label="Selecione o Cliente"
-              options={clientes}
+              name="fornecedor"
+              label="Selecione o Fornecedor"
+              options={fornecedores}
               value={
-                cliente ? { value: cliente.id, label: cliente.nome } : null
+                fornecedor
+                  ? { value: fornecedor.id, label: fornecedor.nome }
+                  : null
               }
               onChange={(option) => {
                 if (option) {
@@ -61,7 +63,7 @@ export function ClientSelect({
                     nome: option.label,
                     email: "",
                     telefone: "",
-                    cpf: "",
+                    cnpj: "",
                   });
                 } else {
                   onSelect(null);
@@ -72,25 +74,30 @@ export function ClientSelect({
         ) : (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Buscar Cliente
+              Buscar Fornecedor
             </label>
-            {cliente ? (
+            {fornecedor ? (
               <div className="mb-4">
-                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-medium text-green-800">
-                        Cliente Selecionado:
+                      <p className="font-medium text-blue-800">
+                        Fornecedor Selecionado:
                       </p>
-                      <p className="text-sm text-green-700">{cliente.nome}</p>
-                      {cliente.email && (
-                        <p className="text-xs text-green-600">
-                          {cliente.email}
+                      <p className="text-sm text-blue-700">{fornecedor.nome}</p>
+                      {fornecedor.email && (
+                        <p className="text-xs text-blue-600">
+                          {fornecedor.email}
                         </p>
                       )}
-                      {cliente.telefone && (
-                        <p className="text-xs text-green-600">
-                          {cliente.telefone}
+                      {fornecedor.telefone && (
+                        <p className="text-xs text-blue-600">
+                          {fornecedor.telefone}
+                        </p>
+                      )}
+                      {fornecedor.cnpj && (
+                        <p className="text-xs text-blue-600">
+                          CNPJ: {fornecedor.cnpj}
                         </p>
                       )}
                     </div>
@@ -104,14 +111,14 @@ export function ClientSelect({
                 </div>
               </div>
             ) : (
-              <ClientSearch
-                onSelect={(cliente) => {
+              <FornecedorSearch
+                onSelect={(fornecedor) => {
                   onSelect({
-                    id: cliente.id,
-                    nome: cliente.nome,
-                    email: cliente.email,
-                    telefone: cliente.telefone,
-                    cpf: "",
+                    id: fornecedor.id,
+                    nome: fornecedor.nome,
+                    email: fornecedor.email,
+                    telefone: fornecedor.telefone,
+                    cnpj: fornecedor.cnpj,
                   });
                 }}
               />
@@ -119,11 +126,11 @@ export function ClientSelect({
           </div>
         )}
 
-        {cliente && (
+        {fornecedor && (
           <div className="mt-4">
             <div className="flex justify-between items-center">
               <h3 className="text-sm font-medium text-gray-700">
-                Detalhes do Cliente
+                Detalhes do Fornecedor
               </h3>
               <button
                 onClick={() => setShowDetails(!showDetails)}
@@ -136,17 +143,17 @@ export function ClientSelect({
             {showDetails && (
               <div className="mt-2 space-y-2 text-sm">
                 <p>
-                  <span className="font-medium">Nome:</span> {cliente.nome}
+                  <span className="font-medium">Nome:</span> {fornecedor.nome}
                 </p>
                 <p>
-                  <span className="font-medium">Email:</span> {cliente.email}
+                  <span className="font-medium">Email:</span> {fornecedor.email}
                 </p>
                 <p>
                   <span className="font-medium">Telefone:</span>{" "}
-                  {cliente.telefone}
+                  {fornecedor.telefone}
                 </p>
                 <p>
-                  <span className="font-medium">CPF:</span> {cliente.cpf}
+                  <span className="font-medium">CNPJ:</span> {fornecedor.cnpj}
                 </p>
               </div>
             )}

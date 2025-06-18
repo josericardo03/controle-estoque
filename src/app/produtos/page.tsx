@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
+import { DataTable } from "@/Components/ui/data-table";
 import { SelectInput } from "@/Components/ui/select";
 import { InputMask } from "@/Components/ui/input-mask";
 import { Modal } from "@/Components/ui/modal";
@@ -11,6 +12,7 @@ import {
   FormSection,
   FormField,
 } from "@/Components/ui/form-layout";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import Link from "next/link";
 
 // Interface para o tipo de produto
@@ -72,8 +74,7 @@ const opcoesCorProduto = [
 ];
 
 export default function ProdutosPage() {
-  const [showForm, setShowForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [produtos] = useState<Produto[]>(produtosExemplo);
   const [produtoParaEditar, setProdutoParaEditar] = useState<Produto | null>(
     null
@@ -81,8 +82,7 @@ export default function ProdutosPage() {
   const [especificacoes, setEspecificacoes] = useState<
     { chave: string; valor: string }[]
   >([]);
-  const methodsNovo = useForm();
-  const methodsEditar = useForm();
+  const methods = useForm();
 
   // Opções para os selects
   const categorias = [
@@ -116,9 +116,102 @@ export default function ProdutosPage() {
     { value: "44", label: "44" },
   ];
 
+  // Colunas da tabela
+  const columns: ColumnDef<Produto>[] = [
+    {
+      id: "codigo",
+      accessorKey: "codigo",
+      header: "Código",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm text-gray-900 font-medium">
+          {row.original.codigo}
+        </div>
+      ),
+    },
+    {
+      id: "nome",
+      accessorKey: "nome",
+      header: "Nome",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="flex flex-col">
+          <div className="text-sm font-medium text-gray-900">
+            {row.original.nome}
+          </div>
+          <div className="text-sm text-gray-500">{row.original.descricao}</div>
+        </div>
+      ),
+    },
+    {
+      id: "preco",
+      accessorKey: "preco",
+      header: "Preço",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm text-gray-900">
+          {row.original.preco.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
+        </div>
+      ),
+    },
+    {
+      id: "quantidade",
+      accessorKey: "quantidade",
+      header: "Quantidade",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm text-gray-900">{row.original.quantidade}</div>
+      ),
+    },
+    {
+      id: "categorias",
+      accessorKey: "categorias",
+      header: "Categorias",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm text-gray-900">
+          {row.original.categorias.join(", ")}
+        </div>
+      ),
+    },
+    {
+      id: "cores",
+      accessorKey: "cores",
+      header: "Cores",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm text-gray-900">
+          {row.original.cores.join(", ")}
+        </div>
+      ),
+    },
+    {
+      id: "tamanho",
+      accessorKey: "tamanho",
+      header: "Tamanho",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm font-medium text-gray-900">
+          {row.original.tamanho}
+        </div>
+      ),
+    },
+    {
+      id: "unidade",
+      accessorKey: "unidade",
+      header: "Unidade",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm text-gray-900">{row.original.unidade}</div>
+      ),
+    },
+  ];
+
+  const handleNovoProduto = () => {
+    setProdutoParaEditar(null);
+    methods.reset({});
+    setEspecificacoes([]);
+    setShowModal(true);
+  };
+
   const handleEditarProduto = (produto: Produto) => {
     setProdutoParaEditar(produto);
-    methodsEditar.reset({
+    methods.reset({
       nome: produto.nome,
       descricao: produto.descricao,
       preco: produto.preco,
@@ -129,12 +222,23 @@ export default function ProdutosPage() {
       unidade: produto.unidade,
       tamanho: produto.tamanho,
     });
-    setShowEditForm(true);
+    setEspecificacoes([]);
+    setShowModal(true);
   };
 
-  const handleSubmitEditar = (data: any) => {
-    console.log("Editar produto:", data);
-    setShowEditForm(false);
+  const handleVisualizarProduto = (produto: Produto) => {
+    // Implementar visualização do produto
+    console.log("Visualizar produto:", produto);
+  };
+
+  const handleExcluirProduto = (produto: Produto) => {
+    // Implementar exclusão do produto
+    console.log("Excluir produto:", produto);
+  };
+
+  const handleSubmit = (data: any) => {
+    console.log(produtoParaEditar ? "Editar produto:" : "Novo produto:", data);
+    setShowModal(false);
   };
 
   const adicionarEspecificacao = () => {
@@ -156,9 +260,9 @@ export default function ProdutosPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 py-6 md:py-8">
       {/* Breadcrumb */}
-      <div className="mb-8">
+      <div className="mb-6">
         <Breadcrumb
           items={[
             {
@@ -170,271 +274,106 @@ export default function ProdutosPage() {
         />
       </div>
 
-      {/* Cabeçalho com título e botão */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold text-blue-500">Gestão de Produtos</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="w-full sm:w-auto bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
-        >
-          {showForm ? "Voltar para Lista" : "Novo Produto"}
-        </button>
-      </div>
+      {/* Conteúdo Principal */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Cabeçalho */}
+        <div className="p-4 md:p-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h1 className="text-lg font-semibold text-gray-900">
+              Gestão de Produtos
+            </h1>
+            <button
+              onClick={handleNovoProduto}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Novo Produto
+            </button>
+          </div>
 
-      {/* Filtros */}
-      <div className="bg-white p-4 rounded-md shadow mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <input
-            type="text"
-            placeholder="Buscar por nome..."
-            className="w-full rounded-md border border-blue-500/20 px-3 py-2 text-blue-500 placeholder-blue-500/50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-          />
-          <SelectInput
-            name="categoria_filtro"
-            options={categorias}
-            placeholder="Filtrar por categoria"
-          />
-          <SelectInput
-            name="cor_filtro"
-            options={cores}
-            placeholder="Filtrar por cor"
-          />
-          <SelectInput
-            name="tamanho_filtro"
-            options={tamanhos}
-            placeholder="Filtrar por tamanho"
+          {/* Filtros */}
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                placeholder="Buscar produtos..."
+                className="pl-10 w-full rounded-lg border border-gray-300 bg-white py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <SelectInput
+              name="categoria_filtro"
+              options={categorias}
+              placeholder="Filtrar por categoria"
+              className="w-full"
+            />
+            <SelectInput
+              name="cor_filtro"
+              options={cores}
+              placeholder="Filtrar por cor"
+              className="w-full"
+            />
+            <SelectInput
+              name="tamanho_filtro"
+              options={tamanhos}
+              placeholder="Filtrar por tamanho"
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Tabela */}
+        <div className="w-full">
+          <DataTable
+            data={produtos}
+            columns={columns}
+            onEdit={handleEditarProduto}
+            onDelete={handleExcluirProduto}
+            onView={handleVisualizarProduto}
           />
         </div>
       </div>
 
-      {showForm ? (
-        /* Formulário de Cadastro/Edição */
-        <FormProvider {...methodsNovo}>
-          <form className="bg-white rounded-md shadow p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Nome
-                </label>
-                <input
-                  type="text"
-                  className="w-full rounded-md border border-blue-500/20 px-3 py-2 text-blue-500 placeholder-blue-500/50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-                  placeholder="Nome do produto"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Código
-                </label>
-                <input
-                  type="text"
-                  className="w-full rounded-md border border-blue-500/20 px-3 py-2 text-blue-500 placeholder-blue-500/50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-                  placeholder="Código do produto"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Descrição
-                </label>
-                <textarea
-                  className="w-full rounded-md border border-blue-500/20 px-3 py-2 text-blue-500 placeholder-blue-500/50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-                  rows={3}
-                  placeholder="Descrição do produto"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Preço
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="w-full rounded-md border border-blue-500/20 px-3 py-2 text-blue-500 placeholder-blue-500/50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-                  placeholder="0,00"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Quantidade
-                </label>
-                <input
-                  type="number"
-                  className="w-full rounded-md border border-blue-500/20 px-3 py-2 text-blue-500 placeholder-blue-500/50 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-                  placeholder="0"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Categorias
-                </label>
-                <SelectInput
-                  name="categorias"
-                  options={categorias}
-                  placeholder="Selecione as categorias"
-                  isMulti={true}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Cores
-                </label>
-                <SelectInput
-                  name="cores"
-                  options={cores}
-                  placeholder="Selecione as cores"
-                  isMulti={true}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Unidade
-                </label>
-                <SelectInput
-                  name="unidade"
-                  options={unidades}
-                  placeholder="Selecione a unidade"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-blue-500 mb-1">
-                  Tamanho
-                </label>
-                <SelectInput
-                  name="tamanho"
-                  options={tamanhos}
-                  placeholder="Selecione o tamanho"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-end space-y-4 sm:space-y-0 sm:space-x-4 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="w-full sm:w-auto px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-              >
-                Salvar
-              </button>
-            </div>
-          </form>
-        </FormProvider>
-      ) : (
-        /* Tabela de Listagem */
-        <div className="bg-white rounded-md shadow overflow-x-auto">
-          <table className="min-w-full divide-y divide-blue-500/20">
-            <thead className="bg-blue-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Código
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Preço
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Quantidade
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Categorias
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Cores
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Tamanho
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Unidade
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-blue-500/20">
-              {produtos.map((produto) => (
-                <tr key={produto.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500">
-                    {produto.codigo}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500">
-                    {produto.nome}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500">
-                    {produto.preco.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500">
-                    {produto.quantidade}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500">
-                    {produto.categorias.join(", ")}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500">
-                    {produto.cores.join(", ")}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500 font-medium">
-                    {produto.tamanho}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500">
-                    {produto.unidade}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500 space-x-2">
-                    <Link
-                      href={`/produtos/${produto.id}`}
-                      className="text-blue-500 hover:text-blue-600"
-                    >
-                      Visualizar
-                    </Link>
-                    <button
-                      onClick={() => handleEditarProduto(produto)}
-                      className="text-yellow-500 hover:text-yellow-600"
-                    >
-                      Editar
-                    </button>
-                    <button className="text-red-500 hover:text-red-600">
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Modal de Edição */}
+      {/* Modal Unificado para Novo Produto e Edição */}
       <Modal
-        isOpen={showEditForm}
-        onClose={() => setShowEditForm(false)}
-        title="Editar Produto"
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={produtoParaEditar ? "Editar Produto" : "Novo Produto"}
         size="lg"
       >
-        <FormProvider {...methodsEditar}>
+        <FormProvider {...methods}>
           <FormLayout
-            title="Edição de Produto"
-            onSubmit={methodsEditar.handleSubmit(handleSubmitEditar)}
+            title={
+              produtoParaEditar ? "Edição de Produto" : "Cadastro de Produto"
+            }
+            onSubmit={methods.handleSubmit(handleSubmit)}
             submitText="Salvar"
             cancelText="Cancelar"
-            onCancel={() => setShowEditForm(false)}
+            onCancel={() => setShowModal(false)}
             className="max-w-4xl mx-auto"
           >
             <div className="space-y-6">
@@ -474,7 +413,7 @@ export default function ProdutosPage() {
                       <FormField label="Nome do Produto" className="space-y-2">
                         <input
                           type="text"
-                          {...methodsEditar.register("nome")}
+                          {...methods.register("nome")}
                           className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                           placeholder="Digite o nome do produto"
                         />
@@ -486,7 +425,7 @@ export default function ProdutosPage() {
                       >
                         <input
                           type="text"
-                          {...methodsEditar.register("codigo")}
+                          {...methods.register("codigo")}
                           className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                           placeholder="Digite o código do produto"
                         />
@@ -498,7 +437,7 @@ export default function ProdutosPage() {
                       className="space-y-2"
                     >
                       <textarea
-                        {...methodsEditar.register("descricao")}
+                        {...methods.register("descricao")}
                         className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                         rows={3}
                         placeholder="Digite uma descrição detalhada do produto"
@@ -535,7 +474,7 @@ export default function ProdutosPage() {
                           <input
                             type="number"
                             step="0.01"
-                            {...methodsEditar.register("preco")}
+                            {...methods.register("preco")}
                             className="w-full rounded-lg border-gray-300 pl-8 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                             placeholder="0,00"
                           />
@@ -548,7 +487,7 @@ export default function ProdutosPage() {
                       >
                         <input
                           type="number"
-                          {...methodsEditar.register("quantidade")}
+                          {...methods.register("quantidade")}
                           className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                           placeholder="0"
                         />
@@ -589,7 +528,7 @@ export default function ProdutosPage() {
                           className="rounded-lg"
                         />
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {methodsEditar
+                          {methods
                             .watch("categorias")
                             ?.map((categoria: string) => {
                               const categoriaInfo = categorias.find(
@@ -640,7 +579,7 @@ export default function ProdutosPage() {
                           className="rounded-lg"
                         />
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {methodsEditar.watch("cores")?.map((cor: string) => {
+                          {methods.watch("cores")?.map((cor: string) => {
                             const corInfo = opcoesCorProduto.find(
                               (c) => c.value === cor
                             );

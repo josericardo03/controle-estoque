@@ -34,6 +34,16 @@ interface Pessoa {
   };
 }
 
+interface HistoricoCompra {
+  id: string;
+  data: string;
+  tipo: "compra" | "venda";
+  valor: number;
+  itens: string[];
+  formaPagamento: string;
+  caixa: string;
+}
+
 // Dados mockados
 const pessoasMock: Pessoa[] = [
   {
@@ -72,6 +82,41 @@ const pessoasMock: Pessoa[] = [
   },
 ];
 
+// Histórico de compras mockado
+const historicoComprasMock: { [pessoaId: string]: HistoricoCompra[] } = {
+  "1": [
+    {
+      id: "1",
+      data: "01/03/2024 14:30",
+      tipo: "venda",
+      valor: 150.0,
+      itens: ["Produto A", "Produto B"],
+      formaPagamento: "Cartão de Crédito",
+      caixa: "Caixa 1",
+    },
+    {
+      id: "2",
+      data: "28/02/2024 10:15",
+      tipo: "venda",
+      valor: 75.5,
+      itens: ["Produto C"],
+      formaPagamento: "Dinheiro",
+      caixa: "Caixa 2",
+    },
+  ],
+  "2": [
+    {
+      id: "3",
+      data: "01/03/2024 09:00",
+      tipo: "compra",
+      valor: 2500.0,
+      itens: ["Materiais de escritório", "Equipamentos"],
+      formaPagamento: "Boleto",
+      caixa: "Caixa 1",
+    },
+  ],
+};
+
 const tiposPessoa = [
   { value: "pf", label: "Pessoa Física" },
   { value: "pj", label: "Pessoa Jurídica" },
@@ -86,7 +131,10 @@ const estados = [
 
 export default function PessoasPage() {
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [pessoaParaEditar, setPessoaParaEditar] = useState<Pessoa | null>(null);
+  const [pessoaParaVisualizar, setPessoaParaVisualizar] =
+    useState<Pessoa | null>(null);
   const methods = useForm();
   const tipoPessoa = methods.watch("tipo");
 
@@ -159,8 +207,8 @@ export default function PessoasPage() {
   };
 
   const handleView = (pessoa: Pessoa) => {
-    // Implementar lógica de visualização
-    console.log("Visualizar:", pessoa);
+    setPessoaParaVisualizar(pessoa);
+    setShowViewModal(true);
   };
 
   const handleSubmit = (data: any) => {
@@ -506,6 +554,176 @@ export default function PessoasPage() {
             </FormSection>
           </FormLayout>
         </FormProvider>
+      </Modal>
+
+      {/* Modal de Visualização com Histórico */}
+      <Modal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        title={`Visualizar Pessoa - ${pessoaParaVisualizar?.nome}`}
+        size="xl"
+      >
+        {pessoaParaVisualizar && (
+          <div className="space-y-6">
+            {/* Informações da Pessoa */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-4">
+                Informações da Pessoa
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Nome</p>
+                  <p className="text-gray-900">{pessoaParaVisualizar.nome}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Tipo</p>
+                  <p className="text-gray-900">
+                    {pessoaParaVisualizar.tipo === "pf"
+                      ? "Pessoa Física"
+                      : "Pessoa Jurídica"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    {pessoaParaVisualizar.tipo === "pf" ? "CPF" : "CNPJ"}
+                  </p>
+                  <p className="text-gray-900">
+                    {pessoaParaVisualizar.documento}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Telefone</p>
+                  <p className="text-gray-900">
+                    {pessoaParaVisualizar.telefone}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Email</p>
+                  <p className="text-gray-900">{pessoaParaVisualizar.email}</p>
+                </div>
+                {pessoaParaVisualizar.dataNascimento && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">
+                      Data de Nascimento
+                    </p>
+                    <p className="text-gray-900">
+                      {pessoaParaVisualizar.dataNascimento}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700">Endereço</p>
+                <p className="text-gray-900">
+                  {pessoaParaVisualizar.endereco.logradouro},{" "}
+                  {pessoaParaVisualizar.endereco.numero}
+                  {pessoaParaVisualizar.endereco.complemento &&
+                    ` - ${pessoaParaVisualizar.endereco.complemento}`}
+                </p>
+                <p className="text-gray-900">
+                  {pessoaParaVisualizar.endereco.bairro} -{" "}
+                  {pessoaParaVisualizar.endereco.cidade}/
+                  {pessoaParaVisualizar.endereco.estado}
+                </p>
+                <p className="text-gray-900">
+                  CEP: {pessoaParaVisualizar.endereco.cep}
+                </p>
+              </div>
+            </div>
+
+            {/* Histórico de Compras */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">
+                Histórico de Compras e Vendas
+              </h3>
+              {historicoComprasMock[pessoaParaVisualizar.id] ? (
+                <div className="space-y-3">
+                  {historicoComprasMock[pessoaParaVisualizar.id].map(
+                    (historico) => (
+                      <div
+                        key={historico.id}
+                        className={`border rounded-lg p-4 ${
+                          historico.tipo === "venda"
+                            ? "border-green-200 bg-green-50"
+                            : "border-blue-200 bg-blue-50"
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span
+                                className={`px-2 py-1 text-xs rounded-full font-medium ${
+                                  historico.tipo === "venda"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-blue-100 text-blue-800"
+                                }`}
+                              >
+                                {historico.tipo === "venda"
+                                  ? "Venda"
+                                  : "Compra"}
+                              </span>
+                              <span className="text-sm text-gray-600">
+                                {historico.data}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm">
+                                <span className="font-medium">Valor:</span> R${" "}
+                                {historico.valor.toFixed(2)}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-medium">
+                                  Forma de Pagamento:
+                                </span>{" "}
+                                {historico.formaPagamento}
+                              </p>
+                              <p className="text-sm">
+                                <span className="font-medium">Caixa:</span>{" "}
+                                {historico.caixa}
+                              </p>
+                              <div>
+                                <p className="text-sm font-medium">Itens:</p>
+                                <ul className="text-sm text-gray-600 ml-4">
+                                  {historico.itens.map((item, index) => (
+                                    <li key={index}>• {item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Nenhum histórico de compras ou vendas encontrado.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Fechar
+              </button>
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  handleEdit(pessoaParaVisualizar);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Editar Pessoa
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

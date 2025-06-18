@@ -39,7 +39,8 @@ interface HistoricoCompra {
   data: string;
   tipo: "compra" | "venda";
   valor: number;
-  itens: string[];
+  vendedor: string;
+  entregador: string;
   formaPagamento: string;
   caixa: string;
 }
@@ -90,7 +91,8 @@ const historicoComprasMock: { [pessoaId: string]: HistoricoCompra[] } = {
       data: "01/03/2024 14:30",
       tipo: "venda",
       valor: 150.0,
-      itens: ["Produto A", "Produto B"],
+      vendedor: "João Silva",
+      entregador: "Carlos Santos",
       formaPagamento: "Cartão de Crédito",
       caixa: "Caixa 1",
     },
@@ -99,7 +101,8 @@ const historicoComprasMock: { [pessoaId: string]: HistoricoCompra[] } = {
       data: "28/02/2024 10:15",
       tipo: "venda",
       valor: 75.5,
-      itens: ["Produto C"],
+      vendedor: "Maria Oliveira",
+      entregador: "Pedro Costa",
       formaPagamento: "Dinheiro",
       caixa: "Caixa 2",
     },
@@ -110,7 +113,8 @@ const historicoComprasMock: { [pessoaId: string]: HistoricoCompra[] } = {
       data: "01/03/2024 09:00",
       tipo: "compra",
       valor: 2500.0,
-      itens: ["Materiais de escritório", "Equipamentos"],
+      vendedor: "Ana Ferreira",
+      entregador: "Roberto Lima",
       formaPagamento: "Boleto",
       caixa: "Caixa 1",
     },
@@ -132,9 +136,11 @@ const estados = [
 export default function PessoasPage() {
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showVendaModal, setShowVendaModal] = useState(false);
   const [pessoaParaEditar, setPessoaParaEditar] = useState<Pessoa | null>(null);
   const [pessoaParaVisualizar, setPessoaParaVisualizar] =
     useState<Pessoa | null>(null);
+  const [vendaParaVisualizar, setVendaParaVisualizar] = useState<any>(null);
   const methods = useForm();
   const tipoPessoa = methods.watch("tipo");
 
@@ -223,6 +229,40 @@ export default function PessoasPage() {
   const handleView = (pessoa: Pessoa) => {
     setPessoaParaVisualizar(pessoa);
     setShowViewModal(true);
+  };
+
+  const handleViewVenda = (historico: HistoricoCompra) => {
+    // Converter o histórico para o formato de venda similar ao do caixa
+    const venda = {
+      id: historico.id,
+      tipo: historico.tipo,
+      data: historico.data,
+      cliente: pessoaParaVisualizar,
+      fornecedor: historico.tipo === "compra" ? pessoaParaVisualizar : null,
+      itens: [
+        {
+          id: "1",
+          codigo: "VENDA",
+          produto: `${historico.tipo === "venda" ? "Venda" : "Compra"} - ${
+            historico.vendedor
+          }`,
+          quantidade: 1,
+          precoUnitario: historico.valor,
+          subtotal: historico.valor,
+        },
+      ],
+      pagamentos: [
+        {
+          forma: historico.formaPagamento,
+          valor: historico.valor,
+        },
+      ],
+      total: historico.valor,
+      vendedor: historico.vendedor,
+      entregador: historico.entregador,
+    };
+    setVendaParaVisualizar(venda);
+    setShowVendaModal(true);
   };
 
   const handleSubmit = (data: any) => {
@@ -710,15 +750,40 @@ export default function PessoasPage() {
                                 {historico.caixa}
                               </p>
                               <div>
-                                <p className="text-sm font-medium">Itens:</p>
-                                <ul className="text-sm text-gray-600 ml-4">
-                                  {historico.itens.map((item, index) => (
-                                    <li key={index}>• {item}</li>
-                                  ))}
-                                </ul>
+                                <p className="text-sm font-medium">Vendedor:</p>
+                                <p className="text-sm text-gray-600 ml-4">
+                                  {historico.vendedor}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">
+                                  Entregador:
+                                </p>
+                                <p className="text-sm text-gray-600 ml-4">
+                                  {historico.entregador}
+                                </p>
                               </div>
                             </div>
                           </div>
+                          <button
+                            onClick={() => handleViewVenda(historico)}
+                            className="ml-4 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                            title="Ver detalhes"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
                     )
@@ -752,6 +817,274 @@ export default function PessoasPage() {
           </div>
         )}
       </Modal>
+
+      {/* Modal de Visualização da Venda */}
+      {showVendaModal && vendaParaVisualizar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+          <div className="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">
+                Detalhes da{" "}
+                {vendaParaVisualizar.tipo === "venda" ? "Venda" : "Compra"}
+              </h2>
+              <button
+                onClick={() => setShowVendaModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Informações Gerais */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Data
+                  </label>
+                  <p className="text-gray-900">{vendaParaVisualizar.data}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo de Operação
+                  </label>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                      vendaParaVisualizar.tipo === "venda"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-blue-100 text-blue-800"
+                    }`}
+                  >
+                    {vendaParaVisualizar.tipo === "venda" ? "Venda" : "Compra"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Cliente/Fornecedor */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {vendaParaVisualizar.tipo === "venda"
+                    ? "Cliente"
+                    : "Fornecedor"}
+                </label>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Nome</p>
+                      <p className="text-gray-900">
+                        {vendaParaVisualizar.cliente?.nome ||
+                          vendaParaVisualizar.fornecedor?.nome}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Email</p>
+                      <p className="text-gray-900">
+                        {vendaParaVisualizar.cliente?.email ||
+                          vendaParaVisualizar.fornecedor?.email}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Telefone
+                      </p>
+                      <p className="text-gray-900">
+                        {vendaParaVisualizar.cliente?.telefone ||
+                          vendaParaVisualizar.fornecedor?.telefone}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">
+                        {vendaParaVisualizar.cliente?.cpf ? "CPF" : "CNPJ"}
+                      </p>
+                      <p className="text-gray-900">
+                        {vendaParaVisualizar.cliente?.cpf ||
+                          vendaParaVisualizar.fornecedor?.cnpj}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Vendedor e Entregador */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Vendedor
+                  </label>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-gray-900">
+                      {vendaParaVisualizar.vendedor}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Entregador
+                  </label>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-gray-900">
+                      {vendaParaVisualizar.entregador}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Produtos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Detalhes da Operação
+                </label>
+                <div className="bg-gray-50 rounded-lg overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Código
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Descrição
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Quantidade
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Preço Unit.
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Subtotal
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {vendaParaVisualizar.itens.map((item: any) => (
+                        <tr key={item.id}>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {item.codigo}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {item.produto}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            {item.quantidade}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            R$ {item.precoUnitario.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            R$ {item.subtotal.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Pagamentos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Formas de Pagamento
+                </label>
+                <div className="space-y-2">
+                  {vendaParaVisualizar.pagamentos.map(
+                    (pagamento: any, index: number) => (
+                      <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {pagamento.forma}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-gray-900">
+                              R$ {pagamento.valor.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900">
+                    Total
+                  </span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    R$ {vendaParaVisualizar.total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <button
+                  onClick={() => setShowVendaModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={() => {
+                    const email =
+                      vendaParaVisualizar.cliente?.email ||
+                      vendaParaVisualizar.fornecedor?.email;
+                    if (email) {
+                      window.location.href = `mailto:${email}?subject=Detalhes da ${
+                        vendaParaVisualizar.tipo === "venda"
+                          ? "Venda"
+                          : "Compra"
+                      }&body=Detalhes da operação:%0D%0A%0D%0A${vendaParaVisualizar.itens
+                        .map(
+                          (item: any) =>
+                            `- ${item.produto}: ${
+                              item.quantidade
+                            }x R$ ${item.subtotal.toFixed(2)}`
+                        )
+                        .join(
+                          "%0D%0A"
+                        )}%0D%0A%0D%0ATotal: R$ ${vendaParaVisualizar.total.toFixed(
+                        2
+                      )}`;
+                    } else {
+                      alert("Email não disponível para esta operação");
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Enviar Email
+                </button>
+                <button
+                  onClick={() => {
+                    alert(
+                      "Funcionalidade de emissão de nota fiscal será implementada em breve"
+                    );
+                  }}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  Emitir NF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

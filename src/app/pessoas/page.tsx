@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { DataTable } from "@/Components/ui/data-table";
@@ -15,6 +15,11 @@ import { InputMask } from "@/Components/ui/input-mask";
 import { ColumnDef, Row } from "@tanstack/react-table";
 
 // Tipos
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 interface Pessoa {
   id: string;
   nome: string;
@@ -24,13 +29,23 @@ interface Pessoa {
   email: string;
   dataNascimento?: string;
   endereco: {
-    cep: string;
+    id?: number;
     logradouro: string;
     numero: string;
     complemento?: string;
-    bairro: string;
-    cidade: string;
-    estado: string;
+    cep: string;
+    bairro: {
+      id: number;
+      nome: string;
+      fkCidade: {
+        id: number;
+        nome: string;
+        fkEstado: {
+          id: number;
+          nome: string;
+        };
+      };
+    };
   };
 }
 
@@ -59,9 +74,18 @@ const pessoasMock: Pessoa[] = [
       cep: "12345-678",
       logradouro: "Rua das Flores",
       numero: "123",
-      bairro: "Centro",
-      cidade: "São Paulo",
-      estado: "SP",
+      bairro: {
+        id: 1,
+        nome: "Centro",
+        fkCidade: {
+          id: 1,
+          nome: "São Paulo",
+          fkEstado: {
+            id: 1,
+            nome: "SP",
+          },
+        },
+      },
     },
   },
   {
@@ -76,9 +100,18 @@ const pessoasMock: Pessoa[] = [
       logradouro: "Avenida Principal",
       numero: "1000",
       complemento: "Sala 123",
-      bairro: "Centro",
-      cidade: "São Paulo",
-      estado: "SP",
+      bairro: {
+        id: 1,
+        nome: "Centro",
+        fkCidade: {
+          id: 1,
+          nome: "São Paulo",
+          fkEstado: {
+            id: 1,
+            nome: "SP",
+          },
+        },
+      },
     },
   },
 ];
@@ -127,10 +160,10 @@ const tiposPessoa = [
 ];
 
 const estados = [
-  { value: "SP", label: "São Paulo" },
-  { value: "RJ", label: "Rio de Janeiro" },
-  { value: "MG", label: "Minas Gerais" },
-  // Adicione mais estados conforme necessário
+  { value: "4", label: "Mato Grosso" },
+  { value: "25", label: "São Paulo" },
+  { value: "19", label: "Rio de Janeiro" },
+  { value: "13", label: "Minas Gerais" },
 ];
 
 export default function PessoasPage() {
@@ -141,8 +174,71 @@ export default function PessoasPage() {
   const [pessoaParaVisualizar, setPessoaParaVisualizar] =
     useState<Pessoa | null>(null);
   const [vendaParaVisualizar, setVendaParaVisualizar] = useState<any>(null);
+  const [cidades, setCidades] = useState<SelectOption[]>([]);
+  const [bairros, setBairros] = useState<SelectOption[]>([]);
   const methods = useForm();
   const tipoPessoa = methods.watch("tipo");
+  const selectedEstado = methods.watch("endereco.bairro.fkCidade.fkEstado.id");
+  const selectedCidade = methods.watch("endereco.bairro.fkCidade.id");
+
+  // Carregar cidades quando o estado for selecionado
+  useEffect(() => {
+    if (selectedEstado) {
+      // Aqui você deve fazer a chamada à API para buscar as cidades do estado selecionado
+      // Por enquanto, vamos usar dados mockados
+      const cidadesMock = [
+        { value: "5", label: "Cuiabá" },
+        { value: "6", label: "Várzea Grande" },
+      ];
+      setCidades(cidadesMock);
+
+      // Atualizar o nome do estado no formulário
+      const estadoSelecionado = estados.find((e) => e.value === selectedEstado);
+      if (estadoSelecionado) {
+        methods.setValue(
+          "endereco.bairro.fkCidade.fkEstado.nome",
+          estadoSelecionado.label
+        );
+      }
+    } else {
+      setCidades([]);
+    }
+  }, [selectedEstado, methods, estados]);
+
+  // Carregar bairros quando a cidade for selecionada
+  useEffect(() => {
+    if (selectedCidade) {
+      // Aqui você deve fazer a chamada à API para buscar os bairros da cidade selecionada
+      // Por enquanto, vamos usar dados mockados
+      const bairrosMock = [
+        { value: "4", label: "Centro Norte" },
+        { value: "5", label: "Centro Sul" },
+      ];
+      setBairros(bairrosMock);
+
+      // Atualizar o nome da cidade no formulário
+      const cidadeSelecionada = cidades.find((c) => c.value === selectedCidade);
+      if (cidadeSelecionada) {
+        methods.setValue(
+          "endereco.bairro.fkCidade.nome",
+          cidadeSelecionada.label
+        );
+      }
+    } else {
+      setBairros([]);
+    }
+  }, [selectedCidade, methods, cidades]);
+
+  // Atualizar o nome do bairro quando selecionado
+  const selectedBairro = methods.watch("endereco.bairro.id");
+  useEffect(() => {
+    if (selectedBairro) {
+      const bairroSelecionado = bairros.find((b) => b.value === selectedBairro);
+      if (bairroSelecionado) {
+        methods.setValue("endereco.bairro.nome", bairroSelecionado.label);
+      }
+    }
+  }, [selectedBairro, methods, bairros]);
 
   // Colunas da tabela
   const columns: ColumnDef<Pessoa>[] = [
@@ -208,7 +304,7 @@ export default function PessoasPage() {
         return (
           <div className="hidden lg:flex flex-col text-sm">
             <span className="text-gray-900">{`${endereco.logradouro}, ${endereco.numero}`}</span>
-            <span className="text-gray-500">{`${endereco.cidade} - ${endereco.estado}`}</span>
+            <span className="text-gray-500">{`${endereco.bairro.fkCidade.nome} - ${endereco.bairro.fkCidade.fkEstado.nome}`}</span>
           </div>
         );
       },
@@ -266,7 +362,26 @@ export default function PessoasPage() {
   };
 
   const handleSubmit = (data: any) => {
-    console.log("Dados do formulário:", data);
+    // Transformar os dados para o formato esperado
+    const formattedData = {
+      ...data,
+      endereco: {
+        ...data.endereco,
+        bairro: {
+          id: data.endereco.bairro.id,
+          nome: data.endereco.bairro.nome,
+          fkCidade: {
+            id: data.endereco.bairro.fkCidade.id,
+            nome: data.endereco.bairro.fkCidade.nome,
+            fkEstado: {
+              id: data.endereco.bairro.fkCidade.fkEstado.id,
+              nome: data.endereco.bairro.fkCidade.fkEstado.nome,
+            },
+          },
+        },
+      },
+    };
+    console.log("Dados do formulário:", formattedData);
     setShowModal(false);
   };
 
@@ -416,7 +531,8 @@ export default function PessoasPage() {
                       {pessoa.endereco.logradouro}, {pessoa.endereco.numero}
                     </p>
                     <p className="text-gray-500">
-                      {pessoa.endereco.cidade} - {pessoa.endereco.estado}
+                      {pessoa.endereco.bairro.fkCidade.nome} -{" "}
+                      {pessoa.endereco.bairro.fkCidade.fkEstado.nome}
                     </p>
                   </div>
 
@@ -593,29 +709,27 @@ export default function PessoasPage() {
                 />
               </FormField>
 
-              <FormField label="Bairro" className="space-y-2">
-                <input
-                  type="text"
-                  {...methods.register("endereco.bairro")}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                  placeholder="Digite o bairro"
-                />
-              </FormField>
-
-              <FormField label="Estado" className="space-y-2">
+              <FormField label="Estado">
                 <SelectInput
-                  name="endereco.estado"
+                  name="endereco.bairro.fkCidade.fkEstado.id"
                   options={estados}
                   placeholder="Selecione o estado"
                 />
               </FormField>
 
-              <FormField label="Cidade" className="space-y-2">
-                <input
-                  type="text"
-                  {...methods.register("endereco.cidade")}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                  placeholder="Digite a cidade"
+              <FormField label="Cidade">
+                <SelectInput
+                  name="endereco.bairro.fkCidade.id"
+                  options={selectedEstado ? cidades : []}
+                  placeholder="Selecione a cidade"
+                />
+              </FormField>
+
+              <FormField label="Bairro">
+                <SelectInput
+                  name="endereco.bairro.id"
+                  options={selectedCidade ? bairros : []}
+                  placeholder="Selecione o bairro"
                 />
               </FormField>
             </FormSection>
@@ -689,9 +803,9 @@ export default function PessoasPage() {
                     ` - ${pessoaParaVisualizar.endereco.complemento}`}
                 </p>
                 <p className="text-gray-900">
-                  {pessoaParaVisualizar.endereco.bairro} -{" "}
-                  {pessoaParaVisualizar.endereco.cidade}/
-                  {pessoaParaVisualizar.endereco.estado}
+                  {pessoaParaVisualizar.endereco.bairro.nome} -{" "}
+                  {pessoaParaVisualizar.endereco.bairro.fkCidade.nome}/
+                  {pessoaParaVisualizar.endereco.bairro.fkCidade.fkEstado.nome}
                 </p>
                 <p className="text-gray-900">
                   CEP: {pessoaParaVisualizar.endereco.cep}

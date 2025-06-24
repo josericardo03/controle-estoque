@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { DataTable } from "@/Components/ui/data-table";
@@ -64,11 +64,89 @@ export default function PessoasPage() {
   const [cidadesFiltradas, setCidadesFiltradas] = useState<SelectOption[]>([]);
   const [bairrosFiltrados, setBairrosFiltrados] = useState<SelectOption[]>([]);
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
+  const [pessoasFiltradas, setPessoasFiltradas] = useState<Pessoa[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingEndereco, setLoadingEndereco] = useState(false);
   const [loadingBairro, setLoadingBairro] = useState(false);
   const [novoBairroNome, setNovoBairroNome] = useState("");
+
+  // Estados para filtros
+  const [filtros, setFiltros] = useState({
+    busca: "",
+    tipo: "",
+    documento: "",
+    estado: "",
+  });
+
   const methods = useForm();
+
+  // Função para aplicar filtros
+  const aplicarFiltros = useCallback(() => {
+    let resultado = [...pessoas];
+
+    // Filtro por busca (nome, email)
+    if (filtros.busca) {
+      const termoBusca = filtros.busca.toLowerCase();
+      resultado = resultado.filter(
+        (pessoa) =>
+          pessoa.nome.toLowerCase().includes(termoBusca) ||
+          pessoa.email.toLowerCase().includes(termoBusca)
+      );
+    }
+
+    // Filtro por tipo de pessoa (PF/PJ)
+    if (filtros.tipo) {
+      if (filtros.tipo === "pf") {
+        resultado = resultado.filter((pessoa) => pessoa.cpf);
+      } else if (filtros.tipo === "pj") {
+        resultado = resultado.filter((pessoa) => pessoa.cnpj);
+      }
+    }
+
+    // Filtro por documento (CPF/CNPJ)
+    if (filtros.documento) {
+      const documentoLimpo = filtros.documento.replace(/\D/g, "");
+      resultado = resultado.filter(
+        (pessoa) =>
+          (pessoa.cpf && pessoa.cpf.includes(documentoLimpo)) ||
+          (pessoa.cnpj && pessoa.cnpj.includes(documentoLimpo))
+      );
+    }
+
+    // Filtro por estado
+    if (filtros.estado) {
+      resultado = resultado.filter(
+        (pessoa) =>
+          pessoa.fkEndereco?.bairro.fkCidade.fkEstado.id.toString() ===
+          filtros.estado
+      );
+    }
+
+    setPessoasFiltradas(resultado);
+  }, [pessoas, filtros]);
+
+  // Aplicar filtros quando pessoas ou filtros mudarem
+  useEffect(() => {
+    aplicarFiltros();
+  }, [aplicarFiltros]);
+
+  // Função para atualizar filtros
+  const atualizarFiltro = (campo: keyof typeof filtros, valor: string) => {
+    setFiltros((prev) => ({
+      ...prev,
+      [campo]: valor,
+    }));
+  };
+
+  // Função para limpar filtros
+  const limparFiltros = () => {
+    setFiltros({
+      busca: "",
+      tipo: "",
+      documento: "",
+      estado: "",
+    });
+  };
 
   const selectedEstado = methods.watch(
     "fkEndereco.bairro.fkCidade.fkEstado.id"
@@ -88,6 +166,7 @@ export default function PessoasPage() {
           ]);
 
         setPessoas(pessoasData);
+        setPessoasFiltradas(pessoasData); // Inicializar filtradas com todas as pessoas
         setEstados(estadosData);
         setCidades(cidadesData);
         setBairros(bairrosData);
@@ -269,6 +348,7 @@ export default function PessoasPage() {
       // Recarregar dados
       const pessoasAtualizadas = await pessoaService.listar();
       setPessoas(pessoasAtualizadas);
+      setPessoasFiltradas(pessoasAtualizadas);
       setShowModal(false);
     } catch (error) {
       console.error("Erro ao criar pessoa com endereço:", error);
@@ -371,6 +451,7 @@ export default function PessoasPage() {
         // Recarregar a lista de pessoas
         const pessoasAtualizadas = await pessoaService.listar();
         setPessoas(pessoasAtualizadas);
+        setPessoasFiltradas(pessoasAtualizadas);
       } catch (error) {
         console.error("Erro ao excluir pessoa:", error);
         alert("Erro ao excluir pessoa. Por favor, tente novamente.");
@@ -417,6 +498,7 @@ export default function PessoasPage() {
       // Recarregar a lista de pessoas
       const pessoasAtualizadas = await pessoaService.listar();
       setPessoas(pessoasAtualizadas);
+      setPessoasFiltradas(pessoasAtualizadas);
       setShowModal(false);
     } catch (error) {
       console.error("Erro ao salvar pessoa:", error);
@@ -501,6 +583,8 @@ export default function PessoasPage() {
               </span>
               <input
                 type="text"
+                value={filtros.busca}
+                onChange={(e) => atualizarFiltro("busca", e.target.value)}
                 placeholder="Buscar pessoas..."
                 className="pl-10 w-full rounded-lg border border-gray-300 bg-white py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
@@ -510,24 +594,113 @@ export default function PessoasPage() {
               options={tiposPessoa}
               placeholder="Tipo de pessoa"
               className="w-full"
+              value={
+                filtros.tipo
+                  ? {
+                      value: filtros.tipo,
+                      label:
+                        tiposPessoa.find((t) => t.value === filtros.tipo)
+                          ?.label || "",
+                    }
+                  : null
+              }
+              onChange={(option) =>
+                atualizarFiltro("tipo", option?.value || "")
+              }
             />
-            <InputMask
-              name="documento_filtro"
-              mask="cpf"
-              placeholder="CPF/CNPJ"
-              className="w-full"
-            />
-            <SelectInput
-              name="estado_filtro"
-              options={estadosOptions}
-              placeholder="Estado"
-              className="w-full"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={filtros.documento}
+                onChange={(e) => atualizarFiltro("documento", e.target.value)}
+                placeholder="CPF/CNPJ"
+                className="w-full rounded-lg border border-gray-300 bg-white py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              <SelectInput
+                name="estado_filtro"
+                options={estadosOptions}
+                placeholder="Estado"
+                className="flex-1"
+                value={
+                  filtros.estado
+                    ? {
+                        value: filtros.estado,
+                        label:
+                          estados.find(
+                            (e) => e.id.toString() === filtros.estado
+                          )?.nome || "",
+                      }
+                    : null
+                }
+                onChange={(option) =>
+                  atualizarFiltro("estado", option?.value || "")
+                }
+              />
+              <button
+                onClick={limparFiltros}
+                className="px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                title="Limpar filtros"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Tabela para Desktop e Cards para Mobile */}
         <div className="w-full">
+          {/* Indicador de resultados filtrados */}
+          {(filtros.busca ||
+            filtros.tipo ||
+            filtros.documento ||
+            filtros.estado) && (
+            <div className="px-4 py-3 bg-blue-50 border-b border-blue-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-blue-700">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" />
+                  </svg>
+                  <span>
+                    Mostrando {pessoasFiltradas.length} de {pessoas.length}{" "}
+                    pessoas
+                    {filtros.busca && ` para "${filtros.busca}"`}
+                  </span>
+                </div>
+                <button
+                  onClick={limparFiltros}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  Limpar filtros
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Versão Desktop */}
           <div className="hidden md:block">
             {loading ? (
@@ -537,7 +710,7 @@ export default function PessoasPage() {
               </div>
             ) : (
               <DataTable
-                data={pessoas}
+                data={pessoasFiltradas}
                 columns={columns}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
@@ -553,12 +726,12 @@ export default function PessoasPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="mt-2 text-gray-600">Carregando...</p>
               </div>
-            ) : pessoas.length === 0 ? (
+            ) : pessoasFiltradas.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p>Nenhuma pessoa cadastrada.</p>
               </div>
             ) : (
-              pessoas.map((pessoa) => (
+              pessoasFiltradas.map((pessoa) => (
                 <div key={pessoa.id} className="bg-white rounded-lg shadow p-4">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start justify-between">

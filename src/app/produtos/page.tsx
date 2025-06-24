@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { DataTable } from "@/Components/ui/data-table";
@@ -43,10 +43,19 @@ export default function ProdutosPage() {
   const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
 
   const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [produtosFiltrados, setProdutosFiltrados] = useState<Produto[]>([]);
   const [cores, setCores] = useState<Cor[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [tamanhos, setTamanhos] = useState<Tamanho[]>([]);
   const [unidades, setUnidades] = useState<Unidade[]>([]);
+
+  // Estados para filtros
+  const [filtros, setFiltros] = useState({
+    busca: "",
+    categoria: "",
+    cor: "",
+    tamanho: "",
+  });
 
   const [produtoParaEditar, setProdutoParaEditar] = useState<Produto | null>(
     null
@@ -67,6 +76,70 @@ export default function ProdutosPage() {
   const [novaUnidadeNome, setNovaUnidadeNome] = useState("");
 
   const methods = useForm();
+
+  // Função para aplicar filtros
+  const aplicarFiltros = useCallback(() => {
+    let resultado = [...produtos];
+
+    // Filtro por busca (nome, código de barras, descrição)
+    if (filtros.busca) {
+      const termoBusca = filtros.busca.toLowerCase();
+      resultado = resultado.filter(
+        (produto) =>
+          produto.nome.toLowerCase().includes(termoBusca) ||
+          produto.codigoBarra.toLowerCase().includes(termoBusca) ||
+          produto.descricao.toLowerCase().includes(termoBusca)
+      );
+    }
+
+    // Filtro por categoria
+    if (filtros.categoria) {
+      resultado = resultado.filter((produto) =>
+        produto.listaCategorias?.some(
+          (cat) => cat.id.toString() === filtros.categoria
+        )
+      );
+    }
+
+    // Filtro por cor
+    if (filtros.cor) {
+      resultado = resultado.filter((produto) =>
+        produto.listaCores?.some((cor) => cor.id.toString() === filtros.cor)
+      );
+    }
+
+    // Filtro por tamanho
+    if (filtros.tamanho) {
+      resultado = resultado.filter(
+        (produto) => produto.fkTamanho?.id.toString() === filtros.tamanho
+      );
+    }
+
+    setProdutosFiltrados(resultado);
+  }, [produtos, filtros]);
+
+  // Aplicar filtros quando produtos ou filtros mudarem
+  useEffect(() => {
+    aplicarFiltros();
+  }, [aplicarFiltros]);
+
+  // Função para atualizar filtros
+  const atualizarFiltro = (campo: keyof typeof filtros, valor: string) => {
+    setFiltros((prev) => ({
+      ...prev,
+      [campo]: valor,
+    }));
+  };
+
+  // Função para limpar filtros
+  const limparFiltros = () => {
+    setFiltros({
+      busca: "",
+      categoria: "",
+      cor: "",
+      tamanho: "",
+    });
+  };
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -142,6 +215,7 @@ export default function ProdutosPage() {
         });
 
         setProdutos(produtosComVinculos);
+        setProdutosFiltrados(produtosComVinculos);
         setCores(coresData);
         setCategorias(categoriasData);
         setTamanhos(tamanhosData);
@@ -451,6 +525,7 @@ export default function ProdutosPage() {
       });
 
       setProdutos(produtosComVinculos);
+      setProdutosFiltrados(produtosComVinculos);
     } catch (error) {
       console.error("Erro ao recarregar produtos:", error);
     }
@@ -630,6 +705,8 @@ export default function ProdutosPage() {
               </span>
               <input
                 type="text"
+                value={filtros.busca}
+                onChange={(e) => atualizarFiltro("busca", e.target.value)}
                 placeholder="Buscar produtos..."
                 className="pl-10 w-full rounded-lg border border-gray-300 bg-white py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
@@ -639,24 +716,122 @@ export default function ProdutosPage() {
               options={categoriasOptions}
               placeholder="Filtrar por categoria"
               className="w-full"
+              value={
+                filtros.categoria
+                  ? {
+                      value: filtros.categoria,
+                      label:
+                        categorias.find(
+                          (c) => c.id.toString() === filtros.categoria
+                        )?.nome || "",
+                    }
+                  : null
+              }
+              onChange={(option) =>
+                atualizarFiltro("categoria", option?.value || "")
+              }
             />
             <SelectInput
               name="cor_filtro"
               options={coresOptions}
               placeholder="Filtrar por cor"
               className="w-full"
+              value={
+                filtros.cor
+                  ? {
+                      value: filtros.cor,
+                      label:
+                        cores.find((c) => c.id.toString() === filtros.cor)
+                          ?.nome || "",
+                    }
+                  : null
+              }
+              onChange={(option) => atualizarFiltro("cor", option?.value || "")}
             />
-            <SelectInput
-              name="tamanho_filtro"
-              options={tamanhosOptions}
-              placeholder="Filtrar por tamanho"
-              className="w-full"
-            />
+            <div className="flex gap-2">
+              <SelectInput
+                name="tamanho_filtro"
+                options={tamanhosOptions}
+                placeholder="Filtrar por tamanho"
+                className="flex-1"
+                value={
+                  filtros.tamanho
+                    ? {
+                        value: filtros.tamanho,
+                        label:
+                          tamanhos.find(
+                            (t) => t.id.toString() === filtros.tamanho
+                          )?.nome || "",
+                      }
+                    : null
+                }
+                onChange={(option) =>
+                  atualizarFiltro("tamanho", option?.value || "")
+                }
+              />
+              <button
+                onClick={limparFiltros}
+                className="px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                title="Limpar filtros"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Tabela */}
         <div className="w-full">
+          {/* Indicador de resultados filtrados */}
+          {(filtros.busca ||
+            filtros.categoria ||
+            filtros.cor ||
+            filtros.tamanho) && (
+            <div className="px-4 py-3 bg-blue-50 border-b border-blue-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-blue-700">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" />
+                  </svg>
+                  <span>
+                    Mostrando {produtosFiltrados.length} de {produtos.length}{" "}
+                    produtos
+                    {filtros.busca && ` para "${filtros.busca}"`}
+                  </span>
+                </div>
+                <button
+                  onClick={limparFiltros}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  Limpar filtros
+                </button>
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -664,7 +839,7 @@ export default function ProdutosPage() {
             </div>
           ) : (
             <DataTable
-              data={produtos}
+              data={produtosFiltrados}
               columns={columns}
               onEdit={handleEditarProduto}
               onDelete={handleExcluirProduto}

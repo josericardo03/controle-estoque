@@ -49,7 +49,7 @@ export function Modal({
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
+        <div className="fixed inset-0 overflow-visible">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
               as={Fragment}
@@ -62,13 +62,13 @@ export function Modal({
             >
               <Dialog.Panel
                 className={cn(
-                  "w-full transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all",
+                  "w-full transform overflow-visible rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] flex flex-col",
                   sizeClasses[size],
                   className
                 )}
               >
                 {(title || description) && (
-                  <div className="mb-4">
+                  <div className="mb-4 flex-shrink-0">
                     {title && (
                       <Dialog.Title className="text-lg font-semibold text-blue-500">
                         {title}
@@ -82,7 +82,9 @@ export function Modal({
                   </div>
                 )}
 
-                <div className="mt-4">{children}</div>
+                <div className="mt-4 flex-1 overflow-y-auto overflow-x-hidden">
+                  {children}
+                </div>
 
                 {showClose && (
                   <button

@@ -56,7 +56,7 @@ const customStyles: StylesConfig<SelectOption, boolean> = {
     backgroundColor: "#ffffff",
     borderRadius: "0.375rem",
     border: "1px solid #3b82f620",
-    zIndex: 9999,
+    zIndex: 99999,
     position: "absolute",
     width: "100%",
     boxShadow:
@@ -64,7 +64,11 @@ const customStyles: StylesConfig<SelectOption, boolean> = {
   }),
   menuPortal: (base: any) => ({
     ...base,
-    zIndex: 9999,
+    zIndex: 99999,
+  }),
+  menuList: (base: any) => ({
+    ...base,
+    maxHeight: "200px",
   }),
   multiValue: (base: any, { data }: any) => ({
     ...base,
@@ -138,6 +142,8 @@ export function SelectInput({
           value={value}
           onChange={onChange}
           menuPortalTarget={mounted ? document.body : null}
+          menuPosition="fixed"
+          menuPlacement="auto"
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
@@ -167,6 +173,8 @@ export function SelectInput({
               styles={customStyles}
               instanceId={name}
               menuPortalTarget={mounted ? document.body : null}
+              menuPosition="fixed"
+              menuPlacement="auto"
               value={
                 isMulti
                   ? options.filter((option) =>

@@ -149,6 +149,22 @@ export default function PessoasPage() {
     }
   }, [selectedBairro, bairros, methods]);
 
+  // Lógica para limpar CPF quando CNPJ for preenchido e vice-versa
+  const cpfValue = methods.watch("cpf");
+  const cnpjValue = methods.watch("cnpj");
+
+  useEffect(() => {
+    if (cpfValue && cpfValue.length > 0) {
+      methods.setValue("cnpj", "");
+    }
+  }, [cpfValue, methods]);
+
+  useEffect(() => {
+    if (cnpjValue && cnpjValue.length > 0) {
+      methods.setValue("cpf", "");
+    }
+  }, [cnpjValue, methods]);
+
   // Função para criar novo bairro
   const handleCriarBairro = async () => {
     if (!novoBairroNome.trim() || !selectedCidade) {
@@ -235,7 +251,8 @@ export default function PessoasPage() {
       const pessoaData = {
         nome: data.nome,
         email: data.email,
-        cnpj: data.cnpj,
+        cpf: data.cpf ? data.cpf.replace(/\D/g, "") : "",
+        cnpj: data.cnpj ? data.cnpj.replace(/\D/g, "") : "",
         dataNascimento: data.dataNascimento,
         telefone: data.telefone,
         fkEndereco: enderecoCriado,
@@ -355,7 +372,8 @@ export default function PessoasPage() {
         const formattedData = {
           nome: data.nome,
           email: data.email,
-          cnpj: data.cnpj,
+          cpf: data.cpf ? data.cpf.replace(/\D/g, "") : "",
+          cnpj: data.cnpj ? data.cnpj.replace(/\D/g, "") : "",
           dataNascimento: data.dataNascimento,
           telefone: data.telefone,
           fkEndereco: {
@@ -653,7 +671,7 @@ export default function PessoasPage() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={`${pessoaParaEditar ? "Editar" : "Nova"} Pessoa`}
-        size="xl"
+        size="full"
       >
         <FormProvider {...methods}>
           <FormLayout
@@ -757,7 +775,7 @@ export default function PessoasPage() {
               </FormField>
 
               <FormField label="Bairro">
-                <div className="flex gap-2">
+                <div className="flex gap-2 relative z-10">
                   <div className="flex-1">
                     <SelectInput
                       name="fkEndereco.bairro.id"
@@ -769,7 +787,7 @@ export default function PessoasPage() {
                     <button
                       type="button"
                       onClick={() => setShowBairroModal(true)}
-                      className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap flex-shrink-0"
                     >
                       Novo
                     </button>

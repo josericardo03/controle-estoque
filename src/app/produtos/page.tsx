@@ -68,6 +68,7 @@ export default function ProdutosPage() {
   useEffect(() => {
     const carregarDados = async () => {
       try {
+        // Carregar dados básicos
         const [
           produtosData,
           coresData,
@@ -82,7 +83,51 @@ export default function ProdutosPage() {
           produtoService.listarUnidades(),
         ]);
 
-        setProdutos(produtosData);
+        // Carregar listas de vínculos (com tratamento de erro)
+        let listaCoresData = [];
+        let listaCategoriasData = [];
+
+        try {
+          listaCoresData = await produtoService.listarListaCores();
+        } catch (error) {
+          console.warn("API lista-cores não disponível:", error);
+        }
+
+        try {
+          listaCategoriasData = await produtoService.listarListaCategorias();
+        } catch (error) {
+          console.warn("API lista-categorias não disponível:", error);
+        }
+
+        // Combinar produtos com suas cores e categorias
+        const produtosComVinculos = produtosData.map((produto) => {
+          // Buscar cores vinculadas ao produto
+          const coresDoProduto = listaCoresData
+            .filter((listaCor) => listaCor.fkProduto.id === produto.id)
+            .map((listaCor) => listaCor.fkCor);
+
+          // Buscar categorias vinculadas ao produto
+          const categoriasDoProduto = listaCategoriasData
+            .filter(
+              (listaCategoria) => listaCategoria.fkProduto.id === produto.id
+            )
+            .map((listaCategoria) => listaCategoria.fkCategoria);
+
+          console.log(`Produto ${produto.nome}:`, {
+            cores: coresDoProduto,
+            categorias: categoriasDoProduto,
+          });
+
+          return {
+            ...produto,
+            listaCores: coresDoProduto,
+            listaCategorias: categoriasDoProduto,
+          };
+        });
+
+        console.log("Produtos com vínculos:", produtosComVinculos);
+
+        setProdutos(produtosComVinculos);
         setCores(coresData);
         setCategorias(categoriasData);
         setTamanhos(tamanhosData);
@@ -323,12 +368,57 @@ export default function ProdutosPage() {
         await produtoService.excluir(produto.id);
 
         // Recarregar a lista de produtos
-        const produtosAtualizados = await produtoService.listar();
-        setProdutos(produtosAtualizados);
+        await recarregarProdutos();
       } catch (error) {
         console.error("Erro ao excluir produto:", error);
         alert("Erro ao excluir produto. Por favor, tente novamente.");
       }
+    }
+  };
+
+  // Função para recarregar produtos com vínculos
+  const recarregarProdutos = async () => {
+    try {
+      const produtosData = await produtoService.listar();
+
+      // Carregar listas de vínculos
+      let listaCoresData = [];
+      let listaCategoriasData = [];
+
+      try {
+        listaCoresData = await produtoService.listarListaCores();
+      } catch (error) {
+        console.warn("API lista-cores não disponível:", error);
+      }
+
+      try {
+        listaCategoriasData = await produtoService.listarListaCategorias();
+      } catch (error) {
+        console.warn("API lista-categorias não disponível:", error);
+      }
+
+      // Combinar produtos com suas cores e categorias
+      const produtosComVinculos = produtosData.map((produto) => {
+        const coresDoProduto = listaCoresData
+          .filter((listaCor) => listaCor.fkProduto.id === produto.id)
+          .map((listaCor) => listaCor.fkCor);
+
+        const categoriasDoProduto = listaCategoriasData
+          .filter(
+            (listaCategoria) => listaCategoria.fkProduto.id === produto.id
+          )
+          .map((listaCategoria) => listaCategoria.fkCategoria);
+
+        return {
+          ...produto,
+          listaCores: coresDoProduto,
+          listaCategorias: categoriasDoProduto,
+        };
+      });
+
+      setProdutos(produtosComVinculos);
+    } catch (error) {
+      console.error("Erro ao recarregar produtos:", error);
     }
   };
 
@@ -398,8 +488,7 @@ export default function ProdutosPage() {
       }
 
       // Recarregar produtos
-      const produtosAtualizados = await produtoService.listar();
-      setProdutos(produtosAtualizados);
+      await recarregarProdutos();
 
       setShowModal(false);
       alert(

@@ -89,6 +89,14 @@ export const produtoService = {
   excluir: (id: number): Promise<void> =>
     api.delete(`/produtos/${id}`).then((res) => res.data),
 
+  // Lista Cores - Buscar todas as listas
+  listarListaCores: (): Promise<any[]> =>
+    api.get("/lista-cores").then((res) => res.data),
+
+  // Lista Categorias - Buscar todas as listas
+  listarListaCategorias: (): Promise<any[]> =>
+    api.get("/lista-categorias").then((res) => res.data),
+
   // Lista Cores - Só precisa dos IDs
   criarListaCor: (corId: number, produtoId: number): Promise<any> =>
     api

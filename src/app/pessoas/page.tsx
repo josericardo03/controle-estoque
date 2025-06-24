@@ -680,7 +680,7 @@ export default function PessoasPage() {
           >
             {/* Informações Básicas */}
             <FormSection title="Informações Básicas">
-              <FormField label="Nome" className="space-y-2">
+              <FormField label="Nome" className="space-y-2" fullWidth>
                 <input
                   type="text"
                   {...methods.register("nome")}
@@ -705,7 +705,7 @@ export default function PessoasPage() {
                 />
               </FormField>
 
-              <FormField label="Email" className="space-y-2">
+              <FormField label="Email" className="space-y-2" fullWidth>
                 <input
                   type="email"
                   {...methods.register("email")}
@@ -725,7 +725,11 @@ export default function PessoasPage() {
 
             {/* Endereço */}
             <FormSection title="Endereço">
-              <FormField label="Nome do Endereço" className="space-y-2">
+              <FormField
+                label="Nome do Endereço"
+                className="space-y-2"
+                fullWidth
+              >
                 <input
                   type="text"
                   {...methods.register("fkEndereco.nome")}
@@ -755,7 +759,7 @@ export default function PessoasPage() {
                 />
               </FormField>
 
-              <FormField label="Complemento" className="space-y-2">
+              <FormField label="Complemento" className="space-y-2" fullWidth>
                 <input
                   type="text"
                   {...methods.register("fkEndereco.complemento")}
@@ -764,7 +768,7 @@ export default function PessoasPage() {
                 />
               </FormField>
 
-              <FormField label="Estado">
+              <FormField label="Estado" fullWidth>
                 <SelectInput
                   name="fkEndereco.bairro.fkCidade.fkEstado.id"
                   options={estadosOptions}
@@ -772,7 +776,7 @@ export default function PessoasPage() {
                 />
               </FormField>
 
-              <FormField label="Cidade">
+              <FormField label="Cidade" fullWidth>
                 <SelectInput
                   name="fkEndereco.bairro.fkCidade.id"
                   options={cidadesFiltradas}
@@ -780,8 +784,8 @@ export default function PessoasPage() {
                 />
               </FormField>
 
-              <FormField label="Bairro">
-                <div className="flex gap-2 relative z-10">
+              <FormField label="Bairro" fullWidth>
+                <div className="flex flex-col sm:flex-row gap-2 relative z-10">
                   <div className="flex-1">
                     <SelectInput
                       name="fkEndereco.bairro.id"

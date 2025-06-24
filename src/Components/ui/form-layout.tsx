@@ -33,28 +33,30 @@ export function FormLayout({
   actions,
 }: FormLayoutProps) {
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-3 sm:space-y-6 pb-2 sm:pb-4 ${className}`}>
       {/* Cabeçalho */}
-      <div>
-        <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
+      <div className="flex-shrink-0">
+        <h2 className="text-lg sm:text-2xl font-semibold text-gray-900">
+          {title}
+        </h2>
         {description && (
           <p className="mt-1 text-sm text-gray-600">{description}</p>
         )}
       </div>
 
       {/* Divisor */}
-      {showDivider && <div className="h-px bg-gray-200" />}
+      {showDivider && <div className="h-px bg-gray-200 flex-shrink-0" />}
 
       {/* Formulário */}
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={onSubmit} className="space-y-3 sm:space-y-6">
         {/* Campos do formulário */}
-        <div className="space-y-6">{children}</div>
+        <div className="space-y-3 sm:space-y-6">{children}</div>
 
         {/* Divisor antes dos botões */}
-        {showDivider && <div className="h-px bg-gray-200" />}
+        {showDivider && <div className="h-px bg-gray-200 flex-shrink-0" />}
 
         {/* Botões de ação */}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-3 flex-shrink-0">
           {/* Botões customizados */}
           {actions}
 
@@ -67,11 +69,16 @@ export function FormLayout({
                   variant="outline"
                   onClick={onCancel}
                   disabled={isSubmitting}
+                  className="w-full sm:w-auto"
                 >
                   {cancelText}
                 </Button>
               )}
-              <Button type="submit" loading={isSubmitting}>
+              <Button
+                type="submit"
+                loading={isSubmitting}
+                className="w-full sm:w-auto"
+              >
                 {submitText}
               </Button>
             </>
@@ -97,12 +104,14 @@ export function FormSection({
   className = "",
 }: FormSectionProps) {
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-2 sm:space-y-4 ${className}`}>
       {/* Cabeçalho da seção */}
       {(title || description) && (
         <div>
           {title && (
-            <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+            <h3 className="text-sm sm:text-lg font-medium text-gray-900">
+              {title}
+            </h3>
           )}
           {description && (
             <p className="mt-1 text-sm text-gray-600">{description}</p>
@@ -111,7 +120,9 @@ export function FormSection({
       )}
 
       {/* Campos da seção */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-3 sm:gap-6 sm:grid-cols-2">
+        {children}
+      </div>
     </div>
   );
 }
@@ -134,7 +145,9 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div
-      className={`${fullWidth ? "col-span-2" : ""} space-y-1.5 ${className}`}
+      className={`${
+        fullWidth ? "col-span-1 sm:col-span-2" : ""
+      } space-y-1.5 ${className}`}
     >
       {label && (
         <label className="block text-sm font-medium text-gray-700">

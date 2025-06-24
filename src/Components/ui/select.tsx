@@ -38,6 +38,7 @@ const customStyles: StylesConfig<SelectOption, boolean> = {
     },
     borderRadius: "0.375rem",
     padding: "1px",
+    minHeight: "38px",
   }),
   option: (base: any, state: any) => ({
     ...base,
@@ -50,6 +51,7 @@ const customStyles: StylesConfig<SelectOption, boolean> = {
     "&:hover": {
       backgroundColor: state.isSelected ? "#3b82f6" : "#3b82f620",
     },
+    padding: "8px 12px",
   }),
   menu: (base: any) => ({
     ...base,
@@ -69,6 +71,7 @@ const customStyles: StylesConfig<SelectOption, boolean> = {
   menuList: (base: any) => ({
     ...base,
     maxHeight: "200px",
+    padding: "4px",
   }),
   multiValue: (base: any, { data }: any) => ({
     ...base,
@@ -144,6 +147,8 @@ export function SelectInput({
           menuPortalTarget={mounted ? document.body : null}
           menuPosition="fixed"
           menuPlacement="auto"
+          menuShouldScrollIntoView={true}
+          menuShouldBlockScroll={true}
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
@@ -175,6 +180,8 @@ export function SelectInput({
               menuPortalTarget={mounted ? document.body : null}
               menuPosition="fixed"
               menuPlacement="auto"
+              menuShouldScrollIntoView={true}
+              menuShouldBlockScroll={true}
               value={
                 isMulti
                   ? options.filter((option) =>

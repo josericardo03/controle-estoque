@@ -21,7 +21,7 @@ const sizeClasses = {
   md: "max-w-md",
   lg: "max-w-lg",
   xl: "max-w-xl",
-  full: "max-w-[90%] max-h-[90%]",
+  full: "max-w-[98%] max-h-[98%] w-full h-full",
 };
 
 export function Modal({
@@ -49,8 +49,8 @@ export function Modal({
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
         </Transition.Child>
 
-        <div className="fixed inset-0 overflow-visible">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-start justify-center p-1 sm:p-4 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -62,7 +62,7 @@ export function Modal({
             >
               <Dialog.Panel
                 className={cn(
-                  "w-full transform overflow-visible rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] flex flex-col",
+                  "w-full transform overflow-hidden rounded-lg bg-white p-3 sm:p-6 text-left align-middle shadow-xl transition-all max-h-[98vh] flex flex-col",
                   sizeClasses[size],
                   className
                 )}
@@ -82,7 +82,7 @@ export function Modal({
                   </div>
                 )}
 
-                <div className="mt-4 flex-1 overflow-y-auto overflow-x-hidden">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
                   {children}
                 </div>
 

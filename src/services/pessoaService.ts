@@ -10,6 +10,7 @@ export interface Pessoa {
   telefone?: string;
   fkEndereco: {
     id?: number;
+    nome: string;
     logradouro: string;
     numero: string;
     complemento?: string;
@@ -39,6 +40,7 @@ export interface CriarPessoaPayload {
   telefone?: string;
   fkEndereco: {
     id?: number;
+    nome: string;
     logradouro: string;
     numero: string;
     complemento?: string;
@@ -56,6 +58,7 @@ export interface AtualizarPessoaPayload {
   telefone?: string;
   fkEndereco: {
     id?: number;
+    nome: string;
     logradouro: string;
     numero: string;
     complemento?: string;

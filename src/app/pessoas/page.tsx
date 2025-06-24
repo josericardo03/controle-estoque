@@ -39,6 +39,14 @@ const tiposPessoa = [
   { value: "pj", label: "Pessoa Jurídica" },
 ];
 
+const tiposLogradouro = [
+  { value: "Rua", label: "Rua" },
+  { value: "Avenida", label: "Avenida" },
+  { value: "Travessa", label: "Travessa" },
+  { value: "Alameda", label: "Alameda" },
+  { value: "Praça", label: "Praça" },
+];
+
 export default function PessoasPage() {
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -229,6 +237,7 @@ export default function PessoasPage() {
 
       // Criar o endereço
       const enderecoData: CriarEnderecoPayload = {
+        nome: data.fkEndereco.nome,
         logradouro: data.fkEndereco.logradouro,
         numero: data.fkEndereco.numero,
         complemento: data.fkEndereco.complemento,
@@ -322,6 +331,7 @@ export default function PessoasPage() {
         }
         return (
           <div className="hidden lg:flex flex-col text-sm">
+            <span className="text-gray-900 font-medium">{endereco.nome}</span>
             <span className="text-gray-900">{`${endereco.logradouro}, ${endereco.numero}`}</span>
             <span className="text-gray-500">{`${endereco.bairro.fkCidade.nome} - ${endereco.bairro.fkCidade.fkEstado.nome}`}</span>
           </div>
@@ -371,6 +381,7 @@ export default function PessoasPage() {
           telefone: data.telefone,
           fkEndereco: {
             id: pessoaParaEditar.fkEndereco?.id,
+            nome: data.fkEndereco.nome,
             logradouro: data.fkEndereco.logradouro,
             numero: data.fkEndereco.numero,
             complemento: data.fkEndereco.complemento,
@@ -569,6 +580,9 @@ export default function PessoasPage() {
                       </p>
                       {pessoa.fkEndereco ? (
                         <>
+                          <p className="text-gray-900 font-medium">
+                            {pessoa.fkEndereco.nome}
+                          </p>
                           <p className="text-gray-900">
                             {pessoa.fkEndereco.logradouro},{" "}
                             {pessoa.fkEndereco.numero}
@@ -711,16 +725,24 @@ export default function PessoasPage() {
 
             {/* Endereço */}
             <FormSection title="Endereço">
+              <FormField label="Nome do Endereço" className="space-y-2">
+                <input
+                  type="text"
+                  {...methods.register("fkEndereco.nome")}
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                  placeholder="Ex: Casa, Trabalho, Residencial"
+                />
+              </FormField>
+
               <FormField label="CEP" className="space-y-2">
                 <InputMask name="fkEndereco.cep" mask="cep" placeholder="CEP" />
               </FormField>
 
-              <FormField label="Logradouro" className="space-y-2 col-span-2">
-                <input
-                  type="text"
-                  {...methods.register("fkEndereco.logradouro")}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                  placeholder="Digite o logradouro"
+              <FormField label="Logradouro" className="space-y-2">
+                <SelectInput
+                  name="fkEndereco.logradouro"
+                  options={tiposLogradouro}
+                  placeholder="Selecione o tipo"
                 />
               </FormField>
 
@@ -838,6 +860,9 @@ export default function PessoasPage() {
                 <p className="text-sm font-medium text-gray-700">Endereço</p>
                 {pessoaParaVisualizar.fkEndereco ? (
                   <>
+                    <p className="text-gray-900 font-medium">
+                      {pessoaParaVisualizar.fkEndereco.nome}
+                    </p>
                     <p className="text-gray-900">
                       {pessoaParaVisualizar.fkEndereco.logradouro},{" "}
                       {pessoaParaVisualizar.fkEndereco.numero}

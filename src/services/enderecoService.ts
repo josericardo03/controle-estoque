@@ -19,6 +19,7 @@ export interface Bairro {
 
 export interface Endereco {
   id?: number;
+  nome: string;
   logradouro: string;
   numero: string;
   complemento?: string;
@@ -33,6 +34,7 @@ export interface CriarBairroPayload {
 }
 
 export interface CriarEnderecoPayload {
+  nome: string;
   logradouro: string;
   numero: string;
   complemento?: string;

@@ -107,14 +107,15 @@ export const produtoService = {
       .then((res) => res.data),
 
   excluirListaCor: (corId: number, produtoId: number): Promise<void> =>
-    api
-      .delete("/lista-cores", {
-        data: {
-          fkCor: { id: corId },
-          fkProduto: { id: produtoId },
-        },
-      })
-      .then((res) => res.data),
+    // api
+    //   .delete("/lista-cores", {
+    //     data: {
+    //       fkCor: { id: corId },
+    //       fkProduto: { id: produtoId },
+    //     },
+    //   })
+    //   .then((res) => res.data),
+    Promise.resolve(), // Temporariamente desabilitado - backend não suporta DELETE
 
   // Lista Categorias - Só precisa dos IDs
   criarListaCategoria: (categoriaId: number, produtoId: number): Promise<any> =>
@@ -129,12 +130,13 @@ export const produtoService = {
     categoriaId: number,
     produtoId: number
   ): Promise<void> =>
-    api
-      .delete("/lista-categorias", {
-        data: {
-          fkCategoria: { id: categoriaId },
-          fkProduto: { id: produtoId },
-        },
-      })
-      .then((res) => res.data),
+    // api
+    //   .delete("/lista-categorias", {
+    //     data: {
+    //       fkCategoria: { id: categoriaId },
+    //       fkProduto: { id: produtoId },
+    //     },
+    //   })
+    //   .then((res) => res.data),
+    Promise.resolve(), // Temporariamente desabilitado - backend não suporta DELETE
 };

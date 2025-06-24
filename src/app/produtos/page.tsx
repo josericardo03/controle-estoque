@@ -89,12 +89,14 @@ export default function ProdutosPage() {
 
         try {
           listaCoresData = await produtoService.listarListaCores();
+          console.log("Lista Cores Data (raw):", listaCoresData);
         } catch (error) {
           console.warn("API lista-cores não disponível:", error);
         }
 
         try {
           listaCategoriasData = await produtoService.listarListaCategorias();
+          console.log("Lista Categorias Data (raw):", listaCategoriasData);
         } catch (error) {
           console.warn("API lista-categorias não disponível:", error);
         }
@@ -102,16 +104,26 @@ export default function ProdutosPage() {
         // Combinar produtos com suas cores e categorias
         const produtosComVinculos = produtosData.map((produto) => {
           // Buscar cores vinculadas ao produto
-          const coresDoProduto = listaCoresData
-            .filter((listaCor) => listaCor.fkProduto.id === produto.id)
-            .map((listaCor) => listaCor.fkCor);
+          const coresVinculadas = listaCoresData.filter((listaCor) => {
+            return listaCor.fkProduto?.id === produto.id;
+          });
+
+          const coresDoProduto = coresVinculadas
+            .map((listaCor) => listaCor.fkCor)
+            .filter((cor): cor is Cor => cor !== undefined);
 
           // Buscar categorias vinculadas ao produto
-          const categoriasDoProduto = listaCategoriasData
+          const categoriasVinculadas = listaCategoriasData.filter(
+            (listaCategoria) => {
+              return listaCategoria.fkProduto?.id === produto.id;
+            }
+          );
+
+          const categoriasDoProduto = categoriasVinculadas
+            .map((listaCategoria) => listaCategoria.fkCategoria)
             .filter(
-              (listaCategoria) => listaCategoria.fkProduto.id === produto.id
-            )
-            .map((listaCategoria) => listaCategoria.fkCategoria);
+              (categoria): categoria is Categoria => categoria !== undefined
+            );
 
           console.log(`Produto ${produto.nome}:`, {
             cores: coresDoProduto,
@@ -124,8 +136,6 @@ export default function ProdutosPage() {
             listaCategorias: categoriasDoProduto,
           };
         });
-
-        console.log("Produtos com vínculos:", produtosComVinculos);
 
         setProdutos(produtosComVinculos);
         setCores(coresData);
@@ -387,27 +397,47 @@ export default function ProdutosPage() {
 
       try {
         listaCoresData = await produtoService.listarListaCores();
+        console.log("Recarregar - Lista Cores Data (raw):", listaCoresData);
       } catch (error) {
         console.warn("API lista-cores não disponível:", error);
       }
 
       try {
         listaCategoriasData = await produtoService.listarListaCategorias();
+        console.log(
+          "Recarregar - Lista Categorias Data (raw):",
+          listaCategoriasData
+        );
       } catch (error) {
         console.warn("API lista-categorias não disponível:", error);
       }
 
       // Combinar produtos com suas cores e categorias
       const produtosComVinculos = produtosData.map((produto) => {
-        const coresDoProduto = listaCoresData
-          .filter((listaCor) => listaCor.fkProduto.id === produto.id)
-          .map((listaCor) => listaCor.fkCor);
+        const coresVinculadas = listaCoresData.filter((listaCor) => {
+          return listaCor.fkProduto?.id === produto.id;
+        });
 
-        const categoriasDoProduto = listaCategoriasData
+        const coresDoProduto = coresVinculadas
+          .map((listaCor) => listaCor.fkCor)
+          .filter((cor): cor is Cor => cor !== undefined);
+
+        const categoriasVinculadas = listaCategoriasData.filter(
+          (listaCategoria) => {
+            return listaCategoria.fkProduto?.id === produto.id;
+          }
+        );
+
+        const categoriasDoProduto = categoriasVinculadas
+          .map((listaCategoria) => listaCategoria.fkCategoria)
           .filter(
-            (listaCategoria) => listaCategoria.fkProduto.id === produto.id
-          )
-          .map((listaCategoria) => listaCategoria.fkCategoria);
+            (categoria): categoria is Categoria => categoria !== undefined
+          );
+
+        console.log(`Recarregar - Produto ${produto.nome}:`, {
+          cores: coresDoProduto,
+          categorias: categoriasDoProduto,
+        });
 
         return {
           ...produto,
@@ -451,20 +481,21 @@ export default function ProdutosPage() {
           produtoData
         );
 
-        // Remover vínculos antigos
-        if (produtoParaEditar.listaCores) {
-          for (const cor of produtoParaEditar.listaCores) {
-            await produtoService.excluirListaCor(cor.id, produtoParaEditar.id);
-          }
-        }
-        if (produtoParaEditar.listaCategorias) {
-          for (const categoria of produtoParaEditar.listaCategorias) {
-            await produtoService.excluirListaCategoria(
-              categoria.id,
-              produtoParaEditar.id
-            );
-          }
-        }
+        // Remover vínculos antigos - TEMPORARIAMENTE DESABILITADO
+        // Backend não suporta DELETE em tabelas de ligação ainda
+        // if (produtoParaEditar.listaCores) {
+        //   for (const cor of produtoParaEditar.listaCores) {
+        //     await produtoService.excluirListaCor(cor.id, produtoParaEditar.id);
+        //   }
+        // }
+        // if (produtoParaEditar.listaCategorias) {
+        //   for (const categoria of produtoParaEditar.listaCategorias) {
+        //     await produtoService.excluirListaCategoria(
+        //       categoria.id,
+        //       produtoParaEditar.id
+        //     );
+        //   }
+        // }
       } else {
         // Criar novo produto
         produtoSalvo = await produtoService.criar(produtoData);

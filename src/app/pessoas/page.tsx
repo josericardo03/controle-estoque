@@ -14,6 +14,12 @@ import { SelectInput } from "@/Components/ui/select";
 import { InputMask } from "@/Components/ui/input-mask";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { pessoaService, Pessoa } from "@/services/pessoaService";
+import {
+  enderecoService,
+  Estado,
+  Cidade,
+  Bairro,
+} from "@/services/enderecoService";
 
 // Tipos
 interface SelectOption {
@@ -26,103 +32,228 @@ const tiposPessoa = [
   { value: "pj", label: "Pessoa Jurídica" },
 ];
 
-const estados = [
-  { value: "4", label: "Mato Grosso" },
-  { value: "25", label: "São Paulo" },
-  { value: "19", label: "Rio de Janeiro" },
-  { value: "13", label: "Minas Gerais" },
-];
-
 export default function PessoasPage() {
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showBairroModal, setShowBairroModal] = useState(false);
   const [pessoaParaEditar, setPessoaParaEditar] = useState<Pessoa | null>(null);
   const [pessoaParaVisualizar, setPessoaParaVisualizar] =
     useState<Pessoa | null>(null);
-  const [cidades, setCidades] = useState<SelectOption[]>([]);
-  const [bairros, setBairros] = useState<SelectOption[]>([]);
+  const [estados, setEstados] = useState<Estado[]>([]);
+  const [cidades, setCidades] = useState<Cidade[]>([]);
+  const [bairros, setBairros] = useState<Bairro[]>([]);
+  const [cidadesFiltradas, setCidadesFiltradas] = useState<SelectOption[]>([]);
+  const [bairrosFiltrados, setBairrosFiltrados] = useState<SelectOption[]>([]);
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingEndereco, setLoadingEndereco] = useState(false);
+  const [loadingBairro, setLoadingBairro] = useState(false);
+  const [novoBairroNome, setNovoBairroNome] = useState("");
   const methods = useForm();
+
   const selectedEstado = methods.watch(
     "fkEndereco.bairro.fkCidade.fkEstado.id"
   );
   const selectedCidade = methods.watch("fkEndereco.bairro.fkCidade.id");
 
-  // Carregar lista de pessoas
+  // Carregar dados iniciais
   useEffect(() => {
-    const carregarPessoas = async () => {
+    const carregarDados = async () => {
       try {
-        const data = await pessoaService.listar();
-        setPessoas(data);
+        const [pessoasData, estadosData, cidadesData, bairrosData] =
+          await Promise.all([
+            pessoaService.listar(),
+            enderecoService.listarEstados(),
+            enderecoService.listarCidades(),
+            enderecoService.listarBairros(),
+          ]);
+
+        setPessoas(pessoasData);
+        setEstados(estadosData);
+        setCidades(cidadesData);
+        setBairros(bairrosData);
       } catch (error) {
-        console.error("Erro ao carregar pessoas:", error);
+        console.error("Erro ao carregar dados:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    carregarPessoas();
+    carregarDados();
   }, []);
 
-  // Carregar cidades quando o estado for selecionado
+  // Filtrar cidades quando estado for selecionado
   useEffect(() => {
     if (selectedEstado) {
-      // Aqui você deve fazer a chamada à API para buscar as cidades do estado selecionado
-      // Por enquanto, vamos usar dados mockados
-      const cidadesMock = [
-        { value: "5", label: "Cuiabá" },
-        { value: "6", label: "Várzea Grande" },
-      ];
-      setCidades(cidadesMock);
+      const cidadesDoEstado = cidades.filter(
+        (cidade) => cidade.fkEstado.id === Number(selectedEstado)
+      );
+      const opcoesCidades = cidadesDoEstado.map((cidade) => ({
+        value: cidade.id.toString(),
+        label: cidade.nome,
+      }));
+      setCidadesFiltradas(opcoesCidades);
 
       // Atualizar o nome do estado no formulário
-      const estadoSelecionado = estados.find((e) => e.value === selectedEstado);
+      const estadoSelecionado = estados.find(
+        (e) => e.id === Number(selectedEstado)
+      );
       if (estadoSelecionado) {
         methods.setValue(
           "fkEndereco.bairro.fkCidade.fkEstado.nome",
-          estadoSelecionado.label
+          estadoSelecionado.nome
         );
       }
     } else {
-      setCidades([]);
+      setCidadesFiltradas([]);
     }
-  }, [selectedEstado, methods, estados]);
+  }, [selectedEstado, cidades, estados, methods]);
 
-  // Carregar bairros quando a cidade for selecionada
+  // Filtrar bairros quando cidade for selecionada
   useEffect(() => {
     if (selectedCidade) {
-      // Aqui você deve fazer a chamada à API para buscar os bairros da cidade selecionada
-      // Por enquanto, vamos usar dados mockados
-      const bairrosMock = [
-        { value: "4", label: "Centro Norte" },
-        { value: "5", label: "Centro Sul" },
-      ];
-      setBairros(bairrosMock);
+      const bairrosDaCidade = bairros.filter(
+        (bairro) => bairro.fkCidade.id === Number(selectedCidade)
+      );
+      const opcoesBairros = bairrosDaCidade.map((bairro) => ({
+        value: bairro.id.toString(),
+        label: bairro.nome,
+      }));
+      setBairrosFiltrados(opcoesBairros);
 
       // Atualizar o nome da cidade no formulário
-      const cidadeSelecionada = cidades.find((c) => c.value === selectedCidade);
+      const cidadeSelecionada = cidades.find(
+        (c) => c.id === Number(selectedCidade)
+      );
       if (cidadeSelecionada) {
         methods.setValue(
           "fkEndereco.bairro.fkCidade.nome",
-          cidadeSelecionada.label
+          cidadeSelecionada.nome
         );
       }
     } else {
-      setBairros([]);
+      setBairrosFiltrados([]);
     }
-  }, [selectedCidade, methods, cidades]);
+  }, [selectedCidade, bairros, cidades, methods]);
 
   // Atualizar o nome do bairro quando selecionado
   const selectedBairro = methods.watch("fkEndereco.bairro.id");
   useEffect(() => {
     if (selectedBairro) {
-      const bairroSelecionado = bairros.find((b) => b.value === selectedBairro);
+      const bairroSelecionado = bairros.find(
+        (b) => b.id === Number(selectedBairro)
+      );
       if (bairroSelecionado) {
-        methods.setValue("fkEndereco.bairro.nome", bairroSelecionado.label);
+        methods.setValue("fkEndereco.bairro.nome", bairroSelecionado.nome);
       }
     }
-  }, [selectedBairro, methods, bairros]);
+  }, [selectedBairro, bairros, methods]);
+
+  // Função para criar novo bairro
+  const handleCriarBairro = async () => {
+    if (!novoBairroNome.trim() || !selectedCidade) {
+      alert("Por favor, preencha o nome do bairro e selecione uma cidade.");
+      return;
+    }
+
+    try {
+      setLoadingBairro(true);
+
+      const cidadeSelecionada = cidades.find(
+        (c) => c.id === Number(selectedCidade)
+      );
+      const estadoSelecionado = estados.find(
+        (e) => e.id === Number(selectedEstado)
+      );
+
+      if (!cidadeSelecionada || !estadoSelecionado) {
+        alert("Erro: Cidade ou estado não encontrado.");
+        return;
+      }
+
+      const novoBairro = await enderecoService.criarBairro({
+        nome: novoBairroNome.trim(),
+        fkCidade: {
+          id: cidadeSelecionada.id,
+          nome: cidadeSelecionada.nome,
+          fkEstado: {
+            id: estadoSelecionado.id,
+            nome: estadoSelecionado.nome,
+          },
+        },
+      });
+
+      // Atualizar a lista de bairros
+      const bairrosAtualizados = await enderecoService.listarBairros();
+      setBairros(bairrosAtualizados);
+
+      // Selecionar automaticamente o novo bairro
+      methods.setValue("fkEndereco.bairro.id", novoBairro.id.toString());
+      methods.setValue("fkEndereco.bairro.nome", novoBairro.nome);
+
+      // Fechar modal e limpar campo
+      setShowBairroModal(false);
+      setNovoBairroNome("");
+
+      alert("Bairro criado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao criar bairro:", error);
+      alert("Erro ao criar bairro. Por favor, tente novamente.");
+    } finally {
+      setLoadingBairro(false);
+    }
+  };
+
+  // Função para criar pessoa com endereço
+  const handleCriarPessoaComEndereco = async (data: any) => {
+    try {
+      setLoadingEndereco(true);
+
+      // Criar o endereço
+      const enderecoData = {
+        logradouro: data.fkEndereco.logradouro,
+        numero: data.fkEndereco.numero,
+        complemento: data.fkEndereco.complemento,
+        cep: data.fkEndereco.cep,
+        bairro: {
+          id: Number(data.fkEndereco.bairro.id),
+          nome: data.fkEndereco.bairro.nome,
+          fkCidade: {
+            id: Number(data.fkEndereco.bairro.fkCidade.id),
+            nome: data.fkEndereco.bairro.fkCidade.nome,
+            fkEstado: {
+              id: Number(data.fkEndereco.bairro.fkCidade.fkEstado.id),
+              nome: data.fkEndereco.bairro.fkCidade.fkEstado.nome,
+            },
+          },
+        },
+      };
+
+      const enderecoCriado = await enderecoService.criarEndereco(enderecoData);
+
+      // Depois criar a pessoa com o endereço criado
+      const pessoaData = {
+        nome: data.nome,
+        email: data.email,
+        cnpj: data.cnpj,
+        dataNascimento: data.dataNascimento,
+        telefone: data.telefone,
+        fkEndereco: enderecoCriado,
+      };
+
+      await pessoaService.criar(pessoaData);
+
+      // Recarregar dados
+      const pessoasAtualizadas = await pessoaService.listar();
+      setPessoas(pessoasAtualizadas);
+      setShowModal(false);
+    } catch (error) {
+      console.error("Erro ao criar pessoa com endereço:", error);
+      alert("Erro ao criar pessoa. Por favor, tente novamente.");
+    } finally {
+      setLoadingEndereco(false);
+    }
+  };
 
   // Colunas da tabela
   const columns: ColumnDef<Pessoa>[] = [
@@ -196,6 +327,8 @@ export default function PessoasPage() {
   };
 
   const handleDelete = async (pessoa: Pessoa) => {
+    if (!pessoa.id) return;
+
     if (window.confirm("Tem certeza que deseja excluir esta pessoa?")) {
       try {
         await pessoaService.excluir(pessoa.id);
@@ -217,44 +350,57 @@ export default function PessoasPage() {
 
   const handleSubmit = async (data: any) => {
     try {
-      // Transformar os dados para o formato esperado
-      const formattedData = {
-        ...data,
-        id: data.id ? Number(data.id) : undefined,
-        fkEndereco: {
-          ...data.fkEndereco,
-          id: data.fkEndereco?.id ? Number(data.fkEndereco.id) : undefined,
-          bairro: {
-            id: Number(data.fkEndereco.bairro.id),
-            nome: data.fkEndereco.bairro.nome,
-            fkCidade: {
-              id: Number(data.fkEndereco.bairro.fkCidade.id),
-              nome: data.fkEndereco.bairro.fkCidade.nome,
-              fkEstado: {
-                id: Number(data.fkEndereco.bairro.fkCidade.fkEstado.id),
-                nome: data.fkEndereco.bairro.fkCidade.fkEstado.nome,
+      if (pessoaParaEditar?.id) {
+        // Lógica para editar pessoa existente
+        const formattedData = {
+          nome: data.nome,
+          email: data.email,
+          cnpj: data.cnpj,
+          dataNascimento: data.dataNascimento,
+          telefone: data.telefone,
+          fkEndereco: {
+            id: pessoaParaEditar.fkEndereco?.id,
+            logradouro: data.fkEndereco.logradouro,
+            numero: data.fkEndereco.numero,
+            complemento: data.fkEndereco.complemento,
+            cep: data.fkEndereco.cep,
+            bairro: {
+              id: Number(data.fkEndereco.bairro.id),
+              nome: data.fkEndereco.bairro.nome,
+              fkCidade: {
+                id: Number(data.fkEndereco.bairro.fkCidade.id),
+                nome: data.fkEndereco.bairro.fkCidade.nome,
+                fkEstado: {
+                  id: Number(data.fkEndereco.bairro.fkCidade.fkEstado.id),
+                  nome: data.fkEndereco.bairro.fkCidade.fkEstado.nome,
+                },
               },
             },
           },
-        },
-      };
+        };
 
-      if (pessoaParaEditar) {
         await pessoaService.atualizar(pessoaParaEditar.id, formattedData);
       } else {
-        await pessoaService.criar(formattedData);
+        // Lógica para criar nova pessoa com endereço
+        await handleCriarPessoaComEndereco(data);
+        return; // handleCriarPessoaComEndereco já recarrega os dados
       }
 
       // Recarregar a lista de pessoas
       const pessoasAtualizadas = await pessoaService.listar();
       setPessoas(pessoasAtualizadas);
-
       setShowModal(false);
     } catch (error) {
       console.error("Erro ao salvar pessoa:", error);
       alert("Erro ao salvar pessoa. Por favor, tente novamente.");
     }
   };
+
+  // Converter dados para formato de select
+  const estadosOptions = estados.map((estado) => ({
+    value: estado.id.toString(),
+    label: estado.nome,
+  }));
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-8">
@@ -334,7 +480,7 @@ export default function PessoasPage() {
             />
             <SelectInput
               name="estado_filtro"
-              options={estados}
+              options={estadosOptions}
               placeholder="Estado"
               className="w-full"
             />
@@ -362,7 +508,7 @@ export default function PessoasPage() {
           </div>
 
           {/* Cards Mobile */}
-          <div className="md:hidden space-y-4">
+          <div className="md:hidden space-y-4 p-4">
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -513,7 +659,7 @@ export default function PessoasPage() {
           <FormLayout
             onSubmit={methods.handleSubmit(handleSubmit)}
             title={`${pessoaParaEditar ? "Edição" : "Cadastro"} de Pessoa`}
-            submitText="Salvar"
+            submitText={loadingEndereco ? "Salvando..." : "Salvar"}
             onCancel={() => setShowModal(false)}
           >
             {/* Informações Básicas */}
@@ -549,6 +695,14 @@ export default function PessoasPage() {
                   {...methods.register("email")}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                   placeholder="Digite o email"
+                />
+              </FormField>
+
+              <FormField label="Telefone" className="space-y-2">
+                <InputMask
+                  name="telefone"
+                  mask="telefone"
+                  placeholder="Telefone"
                 />
               </FormField>
             </FormSection>
@@ -589,7 +743,7 @@ export default function PessoasPage() {
               <FormField label="Estado">
                 <SelectInput
                   name="fkEndereco.bairro.fkCidade.fkEstado.id"
-                  options={estados}
+                  options={estadosOptions}
                   placeholder="Selecione o estado"
                 />
               </FormField>
@@ -597,24 +751,37 @@ export default function PessoasPage() {
               <FormField label="Cidade">
                 <SelectInput
                   name="fkEndereco.bairro.fkCidade.id"
-                  options={selectedEstado ? cidades : []}
+                  options={cidadesFiltradas}
                   placeholder="Selecione a cidade"
                 />
               </FormField>
 
               <FormField label="Bairro">
-                <SelectInput
-                  name="fkEndereco.bairro.id"
-                  options={selectedCidade ? bairros : []}
-                  placeholder="Selecione o bairro"
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <SelectInput
+                      name="fkEndereco.bairro.id"
+                      options={bairrosFiltrados}
+                      placeholder="Selecione o bairro"
+                    />
+                  </div>
+                  {!pessoaParaEditar && selectedCidade && (
+                    <button
+                      type="button"
+                      onClick={() => setShowBairroModal(true)}
+                      className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Novo
+                    </button>
+                  )}
+                </div>
               </FormField>
             </FormSection>
           </FormLayout>
         </FormProvider>
       </Modal>
 
-      {/* Modal de Visualização com Histórico */}
+      {/* Modal de Visualização */}
       <Modal
         isOpen={showViewModal}
         onClose={() => setShowViewModal(false)}
@@ -694,7 +861,7 @@ export default function PessoasPage() {
             </div>
 
             {/* Botões de Ação */}
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            <div className="flex justify-end gap-4">
               <button
                 onClick={() => setShowViewModal(false)}
                 className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
@@ -713,6 +880,59 @@ export default function PessoasPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Modal para criar novo bairro */}
+      <Modal
+        isOpen={showBairroModal}
+        onClose={() => setShowBairroModal(false)}
+        title="Criar Novo Bairro"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nome do Bairro
+            </label>
+            <input
+              type="text"
+              value={novoBairroNome}
+              onChange={(e) => setNovoBairroNome(e.target.value)}
+              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              placeholder="Digite o nome do bairro"
+            />
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              <strong>Cidade:</strong>{" "}
+              {cidades.find((c) => c.id === Number(selectedCidade))?.nome}
+            </p>
+            <p className="text-sm text-blue-800">
+              <strong>Estado:</strong>{" "}
+              {estados.find((e) => e.id === Number(selectedEstado))?.nome}
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => {
+                setShowBairroModal(false);
+                setNovoBairroNome("");
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleCriarBairro}
+              disabled={loadingBairro || !novoBairroNome.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingBairro ? "Criando..." : "Criar Bairro"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

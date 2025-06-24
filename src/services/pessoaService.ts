@@ -1,14 +1,15 @@
 import api from "./api";
 
 export interface Pessoa {
-  id: number;
+  id?: number;
   nome: string;
   email: string;
   cpf?: string;
   cnpj?: string;
   dataNascimento?: string;
+  telefone?: string;
   fkEndereco: {
-    id: number;
+    id?: number;
     logradouro: string;
     numero: string;
     complemento?: string;

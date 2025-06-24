@@ -7,6 +7,7 @@ import { DataTable } from "@/Components/ui/data-table";
 import { SelectInput } from "@/Components/ui/select";
 import { InputMask } from "@/Components/ui/input-mask";
 import { Modal } from "@/Components/ui/modal";
+import { ErrorModal } from "@/Components/ui/error-modal";
 import {
   FormLayout,
   FormSection,
@@ -23,6 +24,7 @@ import {
   CriarProdutoPayload,
   AtualizarProdutoPayload,
 } from "@/services/produtoService";
+import { detectDuplicateError, ErrorInfo } from "@/utils/errorHandler";
 
 // Interface para opções de select
 interface SelectOption {
@@ -37,6 +39,8 @@ export default function ProdutosPage() {
   const [showCategoriaModal, setShowCategoriaModal] = useState(false);
   const [showTamanhoModal, setShowTamanhoModal] = useState(false);
   const [showUnidadeModal, setShowUnidadeModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
 
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [cores, setCores] = useState<Cor[]>([]);
@@ -529,7 +533,18 @@ export default function ProdutosPage() {
       );
     } catch (error) {
       console.error("Erro ao salvar produto:", error);
-      alert("Erro ao salvar produto. Por favor, tente novamente.");
+
+      // Detectar se é um erro de duplicação
+      const errorInfo = detectDuplicateError(error);
+
+      if (errorInfo.isDuplicate) {
+        // Mostrar modal de erro personalizado
+        setErrorInfo(errorInfo);
+        setShowErrorModal(true);
+      } else {
+        // Mostrar alerta genérico para outros erros
+        alert("Erro ao salvar produto. Por favor, tente novamente.");
+      }
     } finally {
       setLoadingSubmit(false);
     }
@@ -1286,6 +1301,20 @@ export default function ProdutosPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal de Erro */}
+      {errorInfo && (
+        <ErrorModal
+          isOpen={showErrorModal}
+          onClose={() => {
+            setShowErrorModal(false);
+            setErrorInfo(null);
+          }}
+          title={errorInfo.title}
+          message={errorInfo.message}
+          details={errorInfo.details}
+        />
+      )}
     </div>
   );
 }

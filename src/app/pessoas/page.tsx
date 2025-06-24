@@ -5,6 +5,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { DataTable } from "@/Components/ui/data-table";
 import { Modal } from "@/Components/ui/modal";
+import { ErrorModal } from "@/Components/ui/error-modal";
 import {
   FormLayout,
   FormField,
@@ -27,6 +28,7 @@ import {
   CriarBairroPayload,
   CriarEnderecoPayload,
 } from "@/services/enderecoService";
+import { detectDuplicateError, ErrorInfo } from "@/utils/errorHandler";
 
 // Tipos
 interface SelectOption {
@@ -51,6 +53,8 @@ export default function PessoasPage() {
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showBairroModal, setShowBairroModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
   const [pessoaParaEditar, setPessoaParaEditar] = useState<Pessoa | null>(null);
   const [pessoaParaVisualizar, setPessoaParaVisualizar] =
     useState<Pessoa | null>(null);
@@ -268,7 +272,18 @@ export default function PessoasPage() {
       setShowModal(false);
     } catch (error) {
       console.error("Erro ao criar pessoa com endereço:", error);
-      alert("Erro ao criar pessoa. Por favor, tente novamente.");
+
+      // Detectar se é um erro de duplicação
+      const errorInfo = detectDuplicateError(error);
+
+      if (errorInfo.isDuplicate) {
+        // Mostrar modal de erro personalizado
+        setErrorInfo(errorInfo);
+        setShowErrorModal(true);
+      } else {
+        // Mostrar alerta genérico para outros erros
+        alert("Erro ao criar pessoa. Por favor, tente novamente.");
+      }
     } finally {
       setLoadingEndereco(false);
     }
@@ -405,7 +420,18 @@ export default function PessoasPage() {
       setShowModal(false);
     } catch (error) {
       console.error("Erro ao salvar pessoa:", error);
-      alert("Erro ao salvar pessoa. Por favor, tente novamente.");
+
+      // Detectar se é um erro de duplicação
+      const errorInfo = detectDuplicateError(error);
+
+      if (errorInfo.isDuplicate) {
+        // Mostrar modal de erro personalizado
+        setErrorInfo(errorInfo);
+        setShowErrorModal(true);
+      } else {
+        // Mostrar alerta genérico para outros erros
+        alert("Erro ao salvar pessoa. Por favor, tente novamente.");
+      }
     }
   };
 
@@ -965,6 +991,20 @@ export default function PessoasPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal de Erro */}
+      {errorInfo && (
+        <ErrorModal
+          isOpen={showErrorModal}
+          onClose={() => {
+            setShowErrorModal(false);
+            setErrorInfo(null);
+          }}
+          title={errorInfo.title}
+          message={errorInfo.message}
+          details={errorInfo.details}
+        />
+      )}
     </div>
   );
 }

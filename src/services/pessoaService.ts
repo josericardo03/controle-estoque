@@ -29,6 +29,41 @@ export interface Pessoa {
   };
 }
 
+// Interfaces para criação e atualização (apenas IDs para relacionamentos)
+export interface CriarPessoaPayload {
+  nome: string;
+  email: string;
+  cpf?: string | null;
+  cnpj?: string | null;
+  dataNascimento?: string;
+  telefone?: string;
+  fkEndereco: {
+    id?: number;
+    logradouro: string;
+    numero: string;
+    complemento?: string;
+    cep: string;
+    bairro: { id: number };
+  };
+}
+
+export interface AtualizarPessoaPayload {
+  nome: string;
+  email: string;
+  cpf?: string | null;
+  cnpj?: string | null;
+  dataNascimento?: string;
+  telefone?: string;
+  fkEndereco: {
+    id?: number;
+    logradouro: string;
+    numero: string;
+    complemento?: string;
+    cep: string;
+    bairro: { id: number };
+  };
+}
+
 export const pessoaService = {
   listar: async () => {
     const response = await api.get<Pessoa[]>("/pessoas");
@@ -40,12 +75,12 @@ export const pessoaService = {
     return response.data;
   },
 
-  criar: async (pessoa: Pessoa) => {
+  criar: async (pessoa: CriarPessoaPayload) => {
     const response = await api.post<Pessoa>("/pessoas", pessoa);
     return response.data;
   },
 
-  atualizar: async (id: number, pessoa: Pessoa) => {
+  atualizar: async (id: number, pessoa: AtualizarPessoaPayload) => {
     const response = await api.put<Pessoa>(`/pessoas/${id}`, pessoa);
     return response.data;
   },

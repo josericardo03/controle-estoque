@@ -13,12 +13,19 @@ import {
 import { SelectInput } from "@/Components/ui/select";
 import { InputMask } from "@/Components/ui/input-mask";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { pessoaService, Pessoa } from "@/services/pessoaService";
+import {
+  pessoaService,
+  Pessoa,
+  CriarPessoaPayload,
+  AtualizarPessoaPayload,
+} from "@/services/pessoaService";
 import {
   enderecoService,
   Estado,
   Cidade,
   Bairro,
+  CriarBairroPayload,
+  CriarEnderecoPayload,
 } from "@/services/enderecoService";
 
 // Tipos
@@ -155,13 +162,13 @@ export default function PessoasPage() {
 
   useEffect(() => {
     if (cpfValue && cpfValue.length > 0) {
-      methods.setValue("cnpj", "");
+      methods.setValue("cnpj", null);
     }
   }, [cpfValue, methods]);
 
   useEffect(() => {
     if (cnpjValue && cnpjValue.length > 0) {
-      methods.setValue("cpf", "");
+      methods.setValue("cpf", null);
     }
   }, [cnpjValue, methods]);
 
@@ -191,11 +198,6 @@ export default function PessoasPage() {
         nome: novoBairroNome.trim(),
         fkCidade: {
           id: cidadeSelecionada.id,
-          nome: cidadeSelecionada.nome,
-          fkEstado: {
-            id: estadoSelecionado.id,
-            nome: estadoSelecionado.nome,
-          },
         },
       });
 
@@ -226,33 +228,24 @@ export default function PessoasPage() {
       setLoadingEndereco(true);
 
       // Criar o endereço
-      const enderecoData = {
+      const enderecoData: CriarEnderecoPayload = {
         logradouro: data.fkEndereco.logradouro,
         numero: data.fkEndereco.numero,
         complemento: data.fkEndereco.complemento,
         cep: data.fkEndereco.cep,
         bairro: {
           id: Number(data.fkEndereco.bairro.id),
-          nome: data.fkEndereco.bairro.nome,
-          fkCidade: {
-            id: Number(data.fkEndereco.bairro.fkCidade.id),
-            nome: data.fkEndereco.bairro.fkCidade.nome,
-            fkEstado: {
-              id: Number(data.fkEndereco.bairro.fkCidade.fkEstado.id),
-              nome: data.fkEndereco.bairro.fkCidade.fkEstado.nome,
-            },
-          },
         },
       };
 
       const enderecoCriado = await enderecoService.criarEndereco(enderecoData);
 
       // Depois criar a pessoa com o endereço criado
-      const pessoaData = {
+      const pessoaData: CriarPessoaPayload = {
         nome: data.nome,
         email: data.email,
-        cpf: data.cpf ? data.cpf.replace(/\D/g, "") : "",
-        cnpj: data.cnpj ? data.cnpj.replace(/\D/g, "") : "",
+        cpf: data.cpf ? data.cpf.replace(/\D/g, "") : null,
+        cnpj: data.cnpj ? data.cnpj.replace(/\D/g, "") : null,
         dataNascimento: data.dataNascimento,
         telefone: data.telefone,
         fkEndereco: enderecoCriado,
@@ -369,11 +362,11 @@ export default function PessoasPage() {
     try {
       if (pessoaParaEditar?.id) {
         // Lógica para editar pessoa existente
-        const formattedData = {
+        const formattedData: AtualizarPessoaPayload = {
           nome: data.nome,
           email: data.email,
-          cpf: data.cpf ? data.cpf.replace(/\D/g, "") : "",
-          cnpj: data.cnpj ? data.cnpj.replace(/\D/g, "") : "",
+          cpf: data.cpf ? data.cpf.replace(/\D/g, "") : null,
+          cnpj: data.cnpj ? data.cnpj.replace(/\D/g, "") : null,
           dataNascimento: data.dataNascimento,
           telefone: data.telefone,
           fkEndereco: {
@@ -384,15 +377,6 @@ export default function PessoasPage() {
             cep: data.fkEndereco.cep,
             bairro: {
               id: Number(data.fkEndereco.bairro.id),
-              nome: data.fkEndereco.bairro.nome,
-              fkCidade: {
-                id: Number(data.fkEndereco.bairro.fkCidade.id),
-                nome: data.fkEndereco.bairro.fkCidade.nome,
-                fkEstado: {
-                  id: Number(data.fkEndereco.bairro.fkCidade.fkEstado.id),
-                  nome: data.fkEndereco.bairro.fkCidade.fkEstado.nome,
-                },
-              },
             },
           },
         };

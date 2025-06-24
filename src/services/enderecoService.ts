@@ -26,6 +26,20 @@ export interface Endereco {
   bairro: Bairro;
 }
 
+// Interfaces para criação (apenas IDs)
+export interface CriarBairroPayload {
+  nome: string;
+  fkCidade: { id: number };
+}
+
+export interface CriarEnderecoPayload {
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  cep: string;
+  bairro: { id: number };
+}
+
 export const enderecoService = {
   listarEstados: async (): Promise<Estado[]> => {
     const response = await api.get<Estado[]>("/estados");
@@ -42,12 +56,12 @@ export const enderecoService = {
     return response.data;
   },
 
-  criarBairro: async (bairro: Omit<Bairro, "id">): Promise<Bairro> => {
+  criarBairro: async (bairro: CriarBairroPayload): Promise<Bairro> => {
     const response = await api.post<Bairro>("/bairros", bairro);
     return response.data;
   },
 
-  criarEndereco: async (endereco: Endereco): Promise<Endereco> => {
+  criarEndereco: async (endereco: CriarEnderecoPayload): Promise<Endereco> => {
     const response = await api.post<Endereco>("/enderecos", endereco);
     return response.data;
   },

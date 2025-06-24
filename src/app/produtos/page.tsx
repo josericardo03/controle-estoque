@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { Breadcrumb } from "@/Components/ui/breadcrumb";
 import { DataTable } from "@/Components/ui/data-table";
@@ -13,118 +13,197 @@ import {
   FormField,
 } from "@/Components/ui/form-layout";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import Link from "next/link";
+import {
+  produtoService,
+  Produto,
+  Cor,
+  Categoria,
+  Tamanho,
+  Unidade,
+  CriarProdutoPayload,
+  AtualizarProdutoPayload,
+} from "@/services/produtoService";
 
-// Interface para o tipo de produto
-interface Produto {
-  id: string;
-  nome: string;
-  descricao: string;
-  preco: number;
-  quantidade: number;
-  codigo: string;
-  categorias: string[];
-  cores: string[];
-  unidade: string;
-  tamanho: string;
+// Interface para opções de select
+interface SelectOption {
+  value: string;
+  label: string;
 }
-
-// Dados mockados para exemplo
-const produtosExemplo: Produto[] = [
-  {
-    id: "1",
-    nome: "Camiseta Básica",
-    descricao: "Camiseta 100% algodão",
-    preco: 49.9,
-    quantidade: 100,
-    codigo: "CAM001",
-    categorias: ["Roupas", "Vestuário"],
-    cores: ["Preto", "Branco"],
-    unidade: "UN",
-    tamanho: "M",
-  },
-  {
-    id: "2",
-    nome: "Calça Jeans",
-    descricao: "Calça jeans tradicional",
-    preco: 149.9,
-    quantidade: 50,
-    codigo: "CJ002",
-    categorias: ["Roupas", "Vestuário"],
-    cores: ["Azul"],
-    unidade: "UN",
-    tamanho: "42",
-  },
-];
-
-// Opções de cores com códigos hexadecimais
-const opcoesCorProduto = [
-  { value: "preto", label: "Preto", hex: "#000000" },
-  { value: "branco", label: "Branco", hex: "#FFFFFF" },
-  { value: "cinza", label: "Cinza", hex: "#808080" },
-  { value: "vermelho", label: "Vermelho", hex: "#FF0000" },
-  { value: "azul", label: "Azul", hex: "#0000FF" },
-  { value: "verde", label: "Verde", hex: "#008000" },
-  { value: "amarelo", label: "Amarelo", hex: "#FFFF00" },
-  { value: "roxo", label: "Roxo", hex: "#800080" },
-  { value: "rosa", label: "Rosa", hex: "#FFC0CB" },
-  { value: "laranja", label: "Laranja", hex: "#FFA500" },
-  { value: "marrom", label: "Marrom", hex: "#8B4513" },
-  { value: "bege", label: "Bege", hex: "#F5F5DC" },
-];
 
 export default function ProdutosPage() {
   const [showModal, setShowModal] = useState(false);
-  const [produtos] = useState<Produto[]>(produtosExemplo);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showCorModal, setShowCorModal] = useState(false);
+  const [showCategoriaModal, setShowCategoriaModal] = useState(false);
+  const [showTamanhoModal, setShowTamanhoModal] = useState(false);
+  const [showUnidadeModal, setShowUnidadeModal] = useState(false);
+
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [cores, setCores] = useState<Cor[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [tamanhos, setTamanhos] = useState<Tamanho[]>([]);
+  const [unidades, setUnidades] = useState<Unidade[]>([]);
+
   const [produtoParaEditar, setProdutoParaEditar] = useState<Produto | null>(
     null
   );
+  const [produtoParaVisualizar, setProdutoParaVisualizar] =
+    useState<Produto | null>(null);
   const [especificacoes, setEspecificacoes] = useState<
     { chave: string; valor: string }[]
   >([]);
+
+  const [loading, setLoading] = useState(true);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [loadingCreate, setLoadingCreate] = useState(false);
+
+  const [novoCorNome, setNovoCorNome] = useState("");
+  const [novaCategoriaNome, setNovaCategoriaNome] = useState("");
+  const [novoTamanhoNome, setNovoTamanhoNome] = useState("");
+  const [novaUnidadeNome, setNovaUnidadeNome] = useState("");
+
   const methods = useForm();
 
-  // Opções para os selects
-  const categorias = [
-    { value: "roupas", label: "Roupas" },
-    { value: "calcados", label: "Calçados" },
-    { value: "acessorios", label: "Acessórios" },
-  ];
+  // Carregar dados iniciais
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        const [
+          produtosData,
+          coresData,
+          categoriasData,
+          tamanhosData,
+          unidadesData,
+        ] = await Promise.all([
+          produtoService.listar(),
+          produtoService.listarCores(),
+          produtoService.listarCategorias(),
+          produtoService.listarTamanhos(),
+          produtoService.listarUnidades(),
+        ]);
 
-  const cores = [
-    { value: "preto", label: "Preto" },
-    { value: "branco", label: "Branco" },
-    { value: "azul", label: "Azul" },
-  ];
+        setProdutos(produtosData);
+        setCores(coresData);
+        setCategorias(categoriasData);
+        setTamanhos(tamanhosData);
+        setUnidades(unidadesData);
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const unidades = [
-    { value: "un", label: "Unidade" },
-    { value: "kg", label: "Quilograma" },
-    { value: "m", label: "Metro" },
-  ];
+    carregarDados();
+  }, []);
 
-  const tamanhos = [
-    { value: "pp", label: "PP" },
-    { value: "p", label: "P" },
-    { value: "m", label: "M" },
-    { value: "g", label: "G" },
-    { value: "gg", label: "GG" },
-    { value: "36", label: "36" },
-    { value: "38", label: "38" },
-    { value: "40", label: "40" },
-    { value: "42", label: "42" },
-    { value: "44", label: "44" },
-  ];
+  // Converter dados para formato de select
+  const coresOptions: SelectOption[] = cores.map((cor) => ({
+    value: cor.id.toString(),
+    label: cor.nome,
+  }));
+
+  const categoriasOptions: SelectOption[] = categorias.map((categoria) => ({
+    value: categoria.id.toString(),
+    label: categoria.nome,
+  }));
+
+  const tamanhosOptions: SelectOption[] = tamanhos.map((tamanho) => ({
+    value: tamanho.id.toString(),
+    label: tamanho.nome,
+  }));
+
+  const unidadesOptions: SelectOption[] = unidades.map((unidade) => ({
+    value: unidade.id.toString(),
+    label: unidade.nome,
+  }));
+
+  // Funções para criar novos registros
+  const handleCriarCor = async () => {
+    if (!novoCorNome.trim()) return;
+
+    try {
+      setLoadingCreate(true);
+      const novaCor = await produtoService.criarCor({
+        nome: novoCorNome.trim(),
+      });
+      setCores([...cores, novaCor]);
+      setShowCorModal(false);
+      setNovoCorNome("");
+    } catch (error) {
+      console.error("Erro ao criar cor:", error);
+      alert("Erro ao criar cor. Tente novamente.");
+    } finally {
+      setLoadingCreate(false);
+    }
+  };
+
+  const handleCriarCategoria = async () => {
+    if (!novaCategoriaNome.trim()) return;
+
+    try {
+      setLoadingCreate(true);
+      const novaCategoria = await produtoService.criarCategoria({
+        nome: novaCategoriaNome.trim(),
+      });
+      setCategorias([...categorias, novaCategoria]);
+      setShowCategoriaModal(false);
+      setNovaCategoriaNome("");
+    } catch (error) {
+      console.error("Erro ao criar categoria:", error);
+      alert("Erro ao criar categoria. Tente novamente.");
+    } finally {
+      setLoadingCreate(false);
+    }
+  };
+
+  const handleCriarTamanho = async () => {
+    if (!novoTamanhoNome.trim()) return;
+
+    try {
+      setLoadingCreate(true);
+      const novoTamanho = await produtoService.criarTamanho({
+        nome: novoTamanhoNome.trim(),
+      });
+      setTamanhos([...tamanhos, novoTamanho]);
+      setShowTamanhoModal(false);
+      setNovoTamanhoNome("");
+    } catch (error) {
+      console.error("Erro ao criar tamanho:", error);
+      alert("Erro ao criar tamanho. Tente novamente.");
+    } finally {
+      setLoadingCreate(false);
+    }
+  };
+
+  const handleCriarUnidade = async () => {
+    if (!novaUnidadeNome.trim()) return;
+
+    try {
+      setLoadingCreate(true);
+      const novaUnidade = await produtoService.criarUnidade({
+        nome: novaUnidadeNome.trim(),
+      });
+      setUnidades([...unidades, novaUnidade]);
+      setShowUnidadeModal(false);
+      setNovaUnidadeNome("");
+    } catch (error) {
+      console.error("Erro ao criar unidade:", error);
+      alert("Erro ao criar unidade. Tente novamente.");
+    } finally {
+      setLoadingCreate(false);
+    }
+  };
 
   // Colunas da tabela
   const columns: ColumnDef<Produto>[] = [
     {
-      id: "codigo",
-      accessorKey: "codigo",
+      id: "codigoBarra",
+      accessorKey: "codigoBarra",
       header: "Código",
       cell: ({ row }: { row: Row<Produto> }) => (
         <div className="text-sm text-gray-900 font-medium">
-          {row.original.codigo}
+          {row.original.codigoBarra}
         </div>
       ),
     },
@@ -142,12 +221,12 @@ export default function ProdutosPage() {
       ),
     },
     {
-      id: "preco",
-      accessorKey: "preco",
+      id: "valor",
+      accessorKey: "valor",
       header: "Preço",
       cell: ({ row }: { row: Row<Produto> }) => (
         <div className="text-sm text-gray-900">
-          {row.original.preco.toLocaleString("pt-BR", {
+          {row.original.valor.toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",
           })}
@@ -155,49 +234,44 @@ export default function ProdutosPage() {
       ),
     },
     {
-      id: "quantidade",
-      accessorKey: "quantidade",
-      header: "Quantidade",
-      cell: ({ row }: { row: Row<Produto> }) => (
-        <div className="text-sm text-gray-900">{row.original.quantidade}</div>
-      ),
-    },
-    {
-      id: "categorias",
-      accessorKey: "categorias",
-      header: "Categorias",
-      cell: ({ row }: { row: Row<Produto> }) => (
-        <div className="text-sm text-gray-900">
-          {row.original.categorias.join(", ")}
-        </div>
-      ),
-    },
-    {
-      id: "cores",
-      accessorKey: "cores",
-      header: "Cores",
-      cell: ({ row }: { row: Row<Produto> }) => (
-        <div className="text-sm text-gray-900">
-          {row.original.cores.join(", ")}
-        </div>
-      ),
-    },
-    {
       id: "tamanho",
-      accessorKey: "tamanho",
+      accessorKey: "fkTamanho",
       header: "Tamanho",
       cell: ({ row }: { row: Row<Produto> }) => (
         <div className="text-sm font-medium text-gray-900">
-          {row.original.tamanho}
+          {row.original.fkTamanho?.nome || "-"}
         </div>
       ),
     },
     {
       id: "unidade",
-      accessorKey: "unidade",
+      accessorKey: "fkUnidade",
       header: "Unidade",
       cell: ({ row }: { row: Row<Produto> }) => (
-        <div className="text-sm text-gray-900">{row.original.unidade}</div>
+        <div className="text-sm text-gray-900">
+          {row.original.fkUnidade?.nome || "-"}
+        </div>
+      ),
+    },
+    {
+      id: "categorias",
+      accessorKey: "listaCategorias",
+      header: "Categorias",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm text-gray-900">
+          {row.original.listaCategorias?.map((cat) => cat.nome).join(", ") ||
+            "-"}
+        </div>
+      ),
+    },
+    {
+      id: "cores",
+      accessorKey: "listaCores",
+      header: "Cores",
+      cell: ({ row }: { row: Row<Produto> }) => (
+        <div className="text-sm text-gray-900">
+          {row.original.listaCores?.map((cor) => cor.nome).join(", ") || "-"}
+        </div>
       ),
     },
   ];
@@ -211,34 +285,134 @@ export default function ProdutosPage() {
 
   const handleEditarProduto = (produto: Produto) => {
     setProdutoParaEditar(produto);
+
+    // Converter especificações do objeto para array
+    const especificacoesArray = Object.entries(
+      produto.especificacoes || {}
+    ).map(([chave, valor]) => ({
+      chave,
+      valor: String(valor),
+    }));
+
     methods.reset({
       nome: produto.nome,
+      codigoBarra: produto.codigoBarra,
       descricao: produto.descricao,
-      preco: produto.preco,
-      quantidade: produto.quantidade,
-      codigo: produto.codigo,
-      categorias: produto.categorias,
-      cores: produto.cores,
-      unidade: produto.unidade,
-      tamanho: produto.tamanho,
+      valor: produto.valor,
+      fkTamanho: produto.fkTamanho?.id?.toString(),
+      fkUnidade: produto.fkUnidade?.id?.toString(),
+      cores: produto.listaCores?.map((cor) => cor.id.toString()) || [],
+      categorias:
+        produto.listaCategorias?.map((cat) => cat.id.toString()) || [],
     });
-    setEspecificacoes([]);
+
+    setEspecificacoes(especificacoesArray);
     setShowModal(true);
   };
 
   const handleVisualizarProduto = (produto: Produto) => {
-    // Implementar visualização do produto
-    console.log("Visualizar produto:", produto);
+    setProdutoParaVisualizar(produto);
+    setShowViewModal(true);
   };
 
-  const handleExcluirProduto = (produto: Produto) => {
-    // Implementar exclusão do produto
-    console.log("Excluir produto:", produto);
+  const handleExcluirProduto = async (produto: Produto) => {
+    if (!produto.id) return;
+
+    if (window.confirm("Tem certeza que deseja excluir este produto?")) {
+      try {
+        await produtoService.excluir(produto.id);
+
+        // Recarregar a lista de produtos
+        const produtosAtualizados = await produtoService.listar();
+        setProdutos(produtosAtualizados);
+      } catch (error) {
+        console.error("Erro ao excluir produto:", error);
+        alert("Erro ao excluir produto. Por favor, tente novamente.");
+      }
+    }
   };
 
-  const handleSubmit = (data: any) => {
-    console.log(produtoParaEditar ? "Editar produto:" : "Novo produto:", data);
-    setShowModal(false);
+  const handleSubmit = async (data: any) => {
+    try {
+      setLoadingSubmit(true);
+
+      // Preparar dados do produto
+      const produtoData: CriarProdutoPayload = {
+        nome: data.nome,
+        codigoBarra: data.codigoBarra,
+        descricao: data.descricao,
+        valor: parseFloat(data.valor),
+        especificacoes: especificacoes.reduce((acc, esp) => {
+          if (esp.chave && esp.valor) {
+            acc[esp.chave] = esp.valor;
+          }
+          return acc;
+        }, {} as Record<string, any>),
+        fkTamanho: { id: parseInt(data.fkTamanho) },
+        fkUnidade: { id: parseInt(data.fkUnidade) },
+      };
+
+      let produtoSalvo: Produto;
+
+      if (produtoParaEditar?.id) {
+        // Atualizar produto existente
+        produtoSalvo = await produtoService.atualizar(
+          produtoParaEditar.id,
+          produtoData
+        );
+
+        // Remover vínculos antigos
+        if (produtoParaEditar.listaCores) {
+          for (const cor of produtoParaEditar.listaCores) {
+            await produtoService.excluirListaCor(cor.id, produtoParaEditar.id);
+          }
+        }
+        if (produtoParaEditar.listaCategorias) {
+          for (const categoria of produtoParaEditar.listaCategorias) {
+            await produtoService.excluirListaCategoria(
+              categoria.id,
+              produtoParaEditar.id
+            );
+          }
+        }
+      } else {
+        // Criar novo produto
+        produtoSalvo = await produtoService.criar(produtoData);
+      }
+
+      // Salvar cores selecionadas (ListaCor)
+      if (data.cores && data.cores.length > 0) {
+        for (const corId of data.cores) {
+          await produtoService.criarListaCor(parseInt(corId), produtoSalvo.id);
+        }
+      }
+
+      // Salvar categorias selecionadas (ListaCategoria)
+      if (data.categorias && data.categorias.length > 0) {
+        for (const categoriaId of data.categorias) {
+          await produtoService.criarListaCategoria(
+            parseInt(categoriaId),
+            produtoSalvo.id
+          );
+        }
+      }
+
+      // Recarregar produtos
+      const produtosAtualizados = await produtoService.listar();
+      setProdutos(produtosAtualizados);
+
+      setShowModal(false);
+      alert(
+        produtoParaEditar
+          ? "Produto atualizado com sucesso!"
+          : "Produto criado com sucesso!"
+      );
+    } catch (error) {
+      console.error("Erro ao salvar produto:", error);
+      alert("Erro ao salvar produto. Por favor, tente novamente.");
+    } finally {
+      setLoadingSubmit(false);
+    }
   };
 
   const adicionarEspecificacao = () => {
@@ -327,19 +501,19 @@ export default function ProdutosPage() {
             </div>
             <SelectInput
               name="categoria_filtro"
-              options={categorias}
+              options={categoriasOptions}
               placeholder="Filtrar por categoria"
               className="w-full"
             />
             <SelectInput
               name="cor_filtro"
-              options={cores}
+              options={coresOptions}
               placeholder="Filtrar por cor"
               className="w-full"
             />
             <SelectInput
               name="tamanho_filtro"
-              options={tamanhos}
+              options={tamanhosOptions}
               placeholder="Filtrar por tamanho"
               className="w-full"
             />
@@ -348,22 +522,29 @@ export default function ProdutosPage() {
 
         {/* Tabela */}
         <div className="w-full">
-          <DataTable
-            data={produtos}
-            columns={columns}
-            onEdit={handleEditarProduto}
-            onDelete={handleExcluirProduto}
-            onView={handleVisualizarProduto}
-          />
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Carregando...</p>
+            </div>
+          ) : (
+            <DataTable
+              data={produtos}
+              columns={columns}
+              onEdit={handleEditarProduto}
+              onDelete={handleExcluirProduto}
+              onView={handleVisualizarProduto}
+            />
+          )}
         </div>
       </div>
 
-      {/* Modal Unificado para Novo Produto e Edição */}
+      {/* Modal de Formulário */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={produtoParaEditar ? "Editar Produto" : "Novo Produto"}
-        size="lg"
+        size="full"
       >
         <FormProvider {...methods}>
           <FormLayout
@@ -371,7 +552,7 @@ export default function ProdutosPage() {
               produtoParaEditar ? "Edição de Produto" : "Cadastro de Produto"
             }
             onSubmit={methods.handleSubmit(handleSubmit)}
-            submitText="Salvar"
+            submitText={loadingSubmit ? "Salvando..." : "Salvar"}
             cancelText="Cancelar"
             onCancel={() => setShowModal(false)}
             className="max-w-4xl mx-auto"
@@ -419,15 +600,12 @@ export default function ProdutosPage() {
                         />
                       </FormField>
 
-                      <FormField
-                        label="Código do Produto"
-                        className="space-y-2"
-                      >
+                      <FormField label="Código de Barras" className="space-y-2">
                         <input
                           type="text"
-                          {...methods.register("codigo")}
+                          {...methods.register("codigoBarra")}
                           className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                          placeholder="Digite o código do produto"
+                          placeholder="Digite o código de barras"
                         />
                       </FormField>
                     </div>
@@ -445,7 +623,7 @@ export default function ProdutosPage() {
                     </FormField>
                   </div>
 
-                  {/* Grupo: Estoque e Preço */}
+                  {/* Grupo: Preço */}
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 text-gray-800">
                       <svg
@@ -463,10 +641,10 @@ export default function ProdutosPage() {
                         <circle cx="20" cy="21" r="1" />
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                       </svg>
-                      <h4 className="text-base font-medium">Estoque e Preço</h4>
+                      <h4 className="text-base font-medium">Preço</h4>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField label="Preço Unitário" className="space-y-2">
+                      <FormField label="Valor Unitário" className="space-y-2">
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span className="text-gray-500 sm:text-sm">R$</span>
@@ -474,23 +652,11 @@ export default function ProdutosPage() {
                           <input
                             type="number"
                             step="0.01"
-                            {...methods.register("preco")}
+                            {...methods.register("valor")}
                             className="w-full rounded-lg border-gray-300 pl-8 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                             placeholder="0,00"
                           />
                         </div>
-                      </FormField>
-
-                      <FormField
-                        label="Quantidade em Estoque"
-                        className="space-y-2"
-                      >
-                        <input
-                          type="number"
-                          {...methods.register("quantidade")}
-                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                          placeholder="0"
-                        />
                       </FormField>
                     </div>
                   </div>
@@ -520,29 +686,23 @@ export default function ProdutosPage() {
                         label="Categorias"
                         className="space-y-2 md:col-span-2"
                       >
-                        <SelectInput
-                          name="categorias"
-                          options={categorias}
-                          placeholder="Selecione as categorias"
-                          isMulti={true}
-                          className="rounded-lg"
-                        />
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {methods
-                            .watch("categorias")
-                            ?.map((categoria: string) => {
-                              const categoriaInfo = categorias.find(
-                                (c) => c.value === categoria
-                              );
-                              return categoriaInfo ? (
-                                <div
-                                  key={categoria}
-                                  className="flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-700"
-                                >
-                                  <span>{categoriaInfo.label}</span>
-                                </div>
-                              ) : null;
-                            })}
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="flex-1">
+                            <SelectInput
+                              name="categorias"
+                              options={categoriasOptions}
+                              placeholder="Selecione as categorias"
+                              isMulti={true}
+                              className="rounded-lg"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowCategoriaModal(true)}
+                            className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap flex-shrink-0"
+                          >
+                            Nova Categoria
+                          </button>
                         </div>
                       </FormField>
 
@@ -550,63 +710,66 @@ export default function ProdutosPage() {
                         label="Unidade de Medida"
                         className="space-y-2"
                       >
-                        <SelectInput
-                          name="unidade"
-                          options={unidades}
-                          placeholder="Selecione a unidade"
-                          className="rounded-lg"
-                        />
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="flex-1">
+                            <SelectInput
+                              name="fkUnidade"
+                              options={unidadesOptions}
+                              placeholder="Selecione a unidade"
+                              className="rounded-lg"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowUnidadeModal(true)}
+                            className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap flex-shrink-0"
+                          >
+                            Nova Unidade
+                          </button>
+                        </div>
                       </FormField>
 
                       <FormField label="Tamanho/Dimensão" className="space-y-2">
-                        <SelectInput
-                          name="tamanho"
-                          options={tamanhos}
-                          placeholder="Selecione o tamanho"
-                          className="rounded-lg"
-                        />
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="flex-1">
+                            <SelectInput
+                              name="fkTamanho"
+                              options={tamanhosOptions}
+                              placeholder="Selecione o tamanho"
+                              className="rounded-lg"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowTamanhoModal(true)}
+                            className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap flex-shrink-0"
+                          >
+                            Novo Tamanho
+                          </button>
+                        </div>
                       </FormField>
 
                       <FormField
                         label="Cores Disponíveis"
                         className="space-y-2 md:col-span-2"
                       >
-                        <SelectInput
-                          name="cores"
-                          options={opcoesCorProduto}
-                          placeholder="Selecione as cores"
-                          isMulti={true}
-                          className="rounded-lg"
-                        />
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {methods.watch("cores")?.map((cor: string) => {
-                            const corInfo = opcoesCorProduto.find(
-                              (c) => c.value === cor
-                            );
-                            return corInfo ? (
-                              <div
-                                key={cor}
-                                className="flex items-center gap-2 px-3 py-1 rounded-full text-sm"
-                                style={{
-                                  backgroundColor: corInfo.hex,
-                                  color: ["branco", "amarelo", "bege"].includes(
-                                    cor
-                                  )
-                                    ? "#000"
-                                    : "#fff",
-                                  border: [
-                                    "branco",
-                                    "amarelo",
-                                    "bege",
-                                  ].includes(cor)
-                                    ? "1px solid #e5e7eb"
-                                    : "none",
-                                }}
-                              >
-                                <span>{corInfo.label}</span>
-                              </div>
-                            ) : null;
-                          })}
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="flex-1">
+                            <SelectInput
+                              name="cores"
+                              options={coresOptions}
+                              placeholder="Selecione as cores"
+                              isMulti={true}
+                              className="rounded-lg"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowCorModal(true)}
+                            className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap flex-shrink-0"
+                          >
+                            Nova Cor
+                          </button>
                         </div>
                       </FormField>
                     </div>
@@ -718,6 +881,290 @@ export default function ProdutosPage() {
             </div>
           </FormLayout>
         </FormProvider>
+      </Modal>
+
+      {/* Modal de Visualização */}
+      <Modal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        title={`Visualizar Produto - ${produtoParaVisualizar?.nome}`}
+        size="xl"
+      >
+        {produtoParaVisualizar && (
+          <div className="space-y-6">
+            {/* Informações do Produto */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-lg font-semibold mb-4">
+                Informações do Produto
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Nome</p>
+                  <p className="text-gray-900">{produtoParaVisualizar.nome}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    Código de Barras
+                  </p>
+                  <p className="text-gray-900">
+                    {produtoParaVisualizar.codigoBarra}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Descrição</p>
+                  <p className="text-gray-900">
+                    {produtoParaVisualizar.descricao}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Valor</p>
+                  <p className="text-gray-900">
+                    {produtoParaVisualizar.valor.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Tamanho</p>
+                  <p className="text-gray-900">
+                    {produtoParaVisualizar.fkTamanho?.nome || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Unidade</p>
+                  <p className="text-gray-900">
+                    {produtoParaVisualizar.fkUnidade?.nome || "-"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700">Categorias</p>
+                <p className="text-gray-900">
+                  {produtoParaVisualizar.listaCategorias
+                    ?.map((cat) => cat.nome)
+                    .join(", ") || "Nenhuma categoria"}
+                </p>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700">Cores</p>
+                <p className="text-gray-900">
+                  {produtoParaVisualizar.listaCores
+                    ?.map((cor) => cor.nome)
+                    .join(", ") || "Nenhuma cor"}
+                </p>
+              </div>
+
+              {Object.keys(produtoParaVisualizar.especificacoes || {}).length >
+                0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-700">
+                    Especificações
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    {Object.entries(produtoParaVisualizar.especificacoes).map(
+                      ([chave, valor]) => (
+                        <div key={chave} className="flex justify-between">
+                          <span className="text-gray-600">{chave}:</span>
+                          <span className="text-gray-900">{String(valor)}</span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Botões de Ação */}
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Fechar
+              </button>
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  handleEditarProduto(produtoParaVisualizar);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Editar Produto
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal para criar nova cor */}
+      <Modal
+        isOpen={showCorModal}
+        onClose={() => setShowCorModal(false)}
+        title="Criar Nova Cor"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nome da Cor
+            </label>
+            <input
+              type="text"
+              value={novoCorNome}
+              onChange={(e) => setNovoCorNome(e.target.value)}
+              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              placeholder="Digite o nome da cor"
+            />
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => {
+                setShowCorModal(false);
+                setNovoCorNome("");
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleCriarCor}
+              disabled={loadingCreate || !novoCorNome.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingCreate ? "Criando..." : "Criar Cor"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal para criar nova categoria */}
+      <Modal
+        isOpen={showCategoriaModal}
+        onClose={() => setShowCategoriaModal(false)}
+        title="Criar Nova Categoria"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nome da Categoria
+            </label>
+            <input
+              type="text"
+              value={novaCategoriaNome}
+              onChange={(e) => setNovaCategoriaNome(e.target.value)}
+              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              placeholder="Digite o nome da categoria"
+            />
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => {
+                setShowCategoriaModal(false);
+                setNovaCategoriaNome("");
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleCriarCategoria}
+              disabled={loadingCreate || !novaCategoriaNome.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingCreate ? "Criando..." : "Criar Categoria"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal para criar novo tamanho */}
+      <Modal
+        isOpen={showTamanhoModal}
+        onClose={() => setShowTamanhoModal(false)}
+        title="Criar Novo Tamanho"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nome do Tamanho
+            </label>
+            <input
+              type="text"
+              value={novoTamanhoNome}
+              onChange={(e) => setNovoTamanhoNome(e.target.value)}
+              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              placeholder="Digite o nome do tamanho"
+            />
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => {
+                setShowTamanhoModal(false);
+                setNovoTamanhoNome("");
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleCriarTamanho}
+              disabled={loadingCreate || !novoTamanhoNome.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingCreate ? "Criando..." : "Criar Tamanho"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal para criar nova unidade */}
+      <Modal
+        isOpen={showUnidadeModal}
+        onClose={() => setShowUnidadeModal(false)}
+        title="Criar Nova Unidade"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nome da Unidade
+            </label>
+            <input
+              type="text"
+              value={novaUnidadeNome}
+              onChange={(e) => setNovaUnidadeNome(e.target.value)}
+              className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              placeholder="Digite o nome da unidade"
+            />
+          </div>
+
+          <div className="flex justify-end gap-4">
+            <button
+              onClick={() => {
+                setShowUnidadeModal(false);
+                setNovaUnidadeNome("");
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleCriarUnidade}
+              disabled={loadingCreate || !novaUnidadeNome.trim()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingCreate ? "Criando..." : "Criar Unidade"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
